@@ -20,7 +20,7 @@ html {
 
 body {
   font-family: var(--font-family);
-  font-weight: var(--font-regular);
+  font-weight: var(--font-medium);
   color: var(--surface);
   background-color: var(--background);
   -webkit-font-smoothing: antialiased;

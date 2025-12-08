@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
 import { useAuth } from "../../hooks/useAuth";
 import { users } from "../../mock/userData";
 
@@ -45,110 +43,127 @@ export function LoginPage() {
     }
   };
 
-  const handleDiscordLogin = () => {
-    // Discord OAuth2 로그인 (추후 구현)
-    window.location.href = "/api/auth/discord";
-  };
+  const quickLoginUsers = users.slice(0, 6);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--grayLv1)] p-4">
-      <div className="w-full max-w-sm bg-[var(--background)] rounded-lg shadow-lg p-8">
-        {/* Logo & Title */}
-        <div className="text-center mb-8">
-          <h1
-            className="text-32 text-bold mb-2"
-            style={{ color: "var(--primary)" }}
-          >
-            we:connect
-          </h1>
-          <p className="text-14 text-[var(--grayLv3)]">팀과 함께 연결되세요</p>
-        </div>
-
-        {/* Nickname Login Form */}
-        <form onSubmit={handleNicknameLogin} className="space-y-4">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl overflow-hidden max-w-4xl w-full flex">
+        {/* 왼쪽: 환영 메시지 */}
+        <div className="flex-1 bg-linear-to-br from-slate-900 to-slate-800 p-10 text-white hidden md:flex flex-col justify-between">
           <div>
-            <Input
-              type="text"
-              placeholder="닉네임을 입력하세요 (예: Hati, Binky)"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              disabled={isLoading}
-            />
-            {error && (
-              <p className="text-12 text-[var(--error)] mt-2">* {error}</p>
-            )}
+            <div className="flex items-center gap-3 mb-8">
+              <img
+                src="/images/favicon.svg"
+                alt="we:connect"
+                className="w-8 h-8"
+              />
+              <h2 className="text-2xl font-bold">we:connect</h2>
+            </div>
+            <h1 className="text-3xl font-bold mb-4">
+              위니브에 오신 것을
+              <br />
+              환영합니다!
+            </h1>
+            <p className="text-slate-300 leading-relaxed">
+              출퇴근 관리, 프로젝트 관리, <br />팀 협업을 한 곳에서 관리하세요.
+            </p>
           </div>
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-          >
-            {isLoading ? "로그인 중..." : "닉네임으로 로그인"}
-          </Button>
-        </form>
 
-        {/* Quick Login */}
-        <div className="mt-6">
-          <p className="text-12 text-[var(--grayLv3)] mb-3 text-center">
-            빠른 로그인
-          </p>
-          <div className="flex flex-wrap gap-2 justify-center">
-            {users.slice(0, 6).map((user) => (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 text-sm text-slate-300">
+              <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
+                📅
+              </div>
+              <span>출퇴근 및 근무 기록</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm text-slate-300">
+              <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
+                📋
+              </div>
+              <span>프로젝트 및 업무 관리</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm text-slate-300">
+              <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
+                👥
+              </div>
+              <span>팀원 현황 및 협업</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 오른쪽: 로그인 폼 */}
+        <div className="flex-1 p-10">
+          <div className="max-w-sm mx-auto">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                팀에 참여하기
+              </h2>
+              <p className="text-slate-500 text-sm">
+                닉네임을 입력하여 로그인하세요
+              </p>
+            </div>
+
+            <form onSubmit={handleNicknameLogin} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  닉네임
+                </label>
+                <input
+                  type="text"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  placeholder="예: Hati, Binky, Licat"
+                  disabled={isLoading}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:bg-slate-100 disabled:cursor-not-allowed"
+                  autoFocus
+                />
+              </div>
+
+              {error && <div className="text-sm text-red-600">※ {error}</div>}
+
               <button
-                key={user.id}
-                onClick={() => handleQuickLogin(user.displayName)}
+                type="submit"
                 disabled={isLoading}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--grayLv1)] hover:bg-[var(--grayLv2)] transition-colors text-12 disabled:opacity-50"
+                className="w-full py-3.5 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed"
               >
-                {user.profileImage ? (
-                  <img
-                    src={user.profileImage}
-                    alt={user.displayName}
-                    className="w-5 h-5 rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="w-5 h-5 rounded-full bg-slate-600 text-white text-10 flex items-center justify-center">
-                    {user.displayName.charAt(0)}
-                  </span>
-                )}
-                {user.displayName}
+                {isLoading ? "로그인 중..." : "로그인"}
               </button>
-            ))}
+            </form>
+
+            {/* 빠른 로그인 */}
+            <div className="mt-6 pt-6 border-t border-slate-100">
+              <p className="text-xs text-slate-500 mb-3 text-center">
+                빠른 로그인
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {quickLoginUsers.map((user) => (
+                  <button
+                    key={user.id}
+                    onClick={() => handleQuickLogin(user.displayName)}
+                    disabled={isLoading}
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-all hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {user.profileImage ? (
+                      <img
+                        src={user.profileImage}
+                        alt={user.displayName}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-slate-600 text-white text-sm flex items-center justify-center font-medium">
+                        {user.displayName.charAt(0)}
+                      </div>
+                    )}
+                    <span className="text-xs font-medium text-slate-700">
+                      {user.displayName}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Divider */}
-        <div className="flex items-center my-6">
-          <div className="flex-1 border-t border-[var(--grayLv2)]" />
-          <span className="px-3 text-12 text-[var(--grayLv3)]">또는</span>
-          <div className="flex-1 border-t border-[var(--grayLv2)]" />
-        </div>
-
-        {/* Discord Login */}
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full flex items-center justify-center gap-2 bg-gray-600 text-white hover:bg-gray-700"
-          onClick={handleDiscordLogin}
-          disabled={isLoading}
-        >
-          <DiscordIcon className="h-5 w-5" />
-          Discord로 로그인
-        </Button>
       </div>
     </div>
-  );
-}
-
-function DiscordIcon({ className }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
-    </svg>
   );
 }
