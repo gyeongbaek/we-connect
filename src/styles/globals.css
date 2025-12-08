@@ -1,0 +1,61 @@
+/* Tailwind CSS */
+@import "tailwindcss";
+
+/* Global Styles */
+@import "./variables.css";
+@import "./typography.css";
+@import "./layout.css";
+
+/* Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Base Styles */
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--font-family);
+  font-weight: var(--font-regular);
+  color: var(--surface);
+  background-color: var(--background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Links */
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Buttons */
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Code */
+code,
+pre {
+  font-family: var(--font-code);
+}
+
+/* Focus visible */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background-color: var(--activation);
+}

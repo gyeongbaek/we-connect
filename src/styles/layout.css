@@ -1,0 +1,26 @@
+/* Layout System */
+
+/* Container */
+.container {
+  max-width: 1190px;
+  width: calc(100% - 32px);
+  margin: 0 auto;
+}
+
+/* Breakpoints */
+/* Mobile: 0px - 767px */
+/* Tablet: 768px - 1023px */
+/* Desktop: 1024px - 1439px */
+/* LargeDesk: 1440px+ */
+
+@media (min-width: 768px) {
+  /* Tablet styles */
+}
+
+@media (min-width: 1024px) {
+  /* Desktop styles */
+}
+
+@media (min-width: 1440px) {
+  /* Large Desktop styles */
+}

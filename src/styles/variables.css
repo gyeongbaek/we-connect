@@ -1,0 +1,62 @@
+/* Design System Variables */
+
+:root {
+  /* Light Theme (Default) */
+  --white: #fff;
+  --primary: #2e6ff2;
+  --background: #fff;
+  --surface: #121314;
+  --grayLv1: #f3f5fa;
+  --grayLv2: #d9dbe0;
+  --grayLv3: #8d9299;
+  --grayLv4: #47494d;
+  --error: #ff3440;
+  --warn: #ffc533;
+  --activation: #dee8ff;
+
+  /* Accessibility Colors */
+  --primaryA11y: #2861d2;
+  --grayLv3A11y: #6c7074;
+
+  /* Code Highlight Colors */
+  --code-pink: #c93864;
+  --code-purple: #964dd1;
+  --code-blue: #2e5dd6;
+  --code-green: #328026;
+  --code-orange: #e37c00;
+
+  /* Shadow */
+  --shadow: 0rem 0.25rem 1.25rem 0rem #0000000a;
+
+  /* Typography */
+  --font-regular: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* Font Family */
+  --font-family: "Pretendard", sans-serif;
+  --font-code: "Source Code Pro", monospace;
+}
+
+/* Dark Theme */
+[data-theme="dark"],
+.dark {
+  --primary: #3075ff;
+  --background: #1f2123;
+  --surface: #ffffff;
+  --grayLv1: #121314;
+  --grayLv2: #595f66;
+  --grayLv3: #d9dbe0;
+  --grayLv4: #f3f5fa;
+  --error: #fc7377;
+  --warn: #ffe187;
+  --activation: #2b3444;
+
+  /* Dark Code Highlight Colors */
+  --code-pink: #ed4779;
+  --code-purple: #c893fd;
+  --code-blue: #618dff;
+  --code-green: #50c140;
+  --code-orange: #ffa52a;
+}

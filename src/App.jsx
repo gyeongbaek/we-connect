@@ -1,0 +1,43 @@
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./hooks/useAuth";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { Layout } from "./components/layout";
+import { LoginPage } from "./features/auth/LoginPage";
+import { AttendancePage } from "./features/attendance/AttendancePage";
+import { TasksPage } from "./features/tasks/TasksPage";
+import { ProjectsPage } from "./features/projects/ProjectsPage";
+import { ProjectAddPage } from "./features/projects/ProjectAddPage";
+import { ProjectEditPage } from "./features/projects/ProjectEditPage";
+import { TeamPage } from "./features/team/TeamPage";
+import { ProfilePage } from "./features/profile/ProfilePage";
+
+function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/attendance" replace />} />
+            <Route path="attendance" element={<AttendancePage />} />
+            <Route path="tasks" element={<TasksPage />} />
+            <Route path="projects" element={<ProjectsPage />} />
+            <Route path="projects/new" element={<ProjectAddPage />} />
+            <Route path="projects/:projectId/edit" element={<ProjectEditPage />} />
+            <Route path="team" element={<TeamPage />} />
+            <Route path="profile" element={<ProfilePage />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
+
+export default App;
