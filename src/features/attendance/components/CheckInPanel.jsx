@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ChevronDown, Send, Clock, Calendar, Edit2, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronDown, Send, Clock, Calendar, Edit2, AlertTriangle, AlertCircle } from "lucide-react";
 import { Card } from "./Card";
 import { TimeRangeSlider, formatHours, formatTime } from "./TimeRangeSlider";
 import { VacationModal } from "./VacationModal";
@@ -33,8 +33,9 @@ const getLocationIcon = (location) => {
 export const CheckInWidget = () => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [vacationRemovalAlert, setVacationRemovalAlert] = useState(null);
 
-  const { openModal: openVacationModal } = useVacationStore();
+  const { openModal: openVacationModal, getVacationForDate, removeVacation } = useVacationStore();
 
   const {
     morningLocation,
@@ -67,6 +68,22 @@ export const CheckInWidget = () => {
 
   const today = new Date().toISOString().split("T")[0];
   const todayAttendance = registeredAttendance[today];
+
+  // 등록된 휴가가 있으면 자동으로 설정
+  useEffect(() => {
+    const vacation = getVacationForDate(today);
+    if (vacation && !todayAttendance) {
+      if (vacation.timeType === "MORNING" || vacation.timeType === "FULL") {
+        setMorningLocation("휴가");
+        setMorningVacationType(vacation.vacationType);
+      }
+      if (vacation.timeType === "AFTERNOON" || vacation.timeType === "FULL") {
+        setAfternoonLocation("휴가");
+        setAfternoonVacationType(vacation.vacationType);
+      }
+    }
+  }, [today, getVacationForDate, todayAttendance, setMorningLocation, setAfternoonLocation, setMorningVacationType, setAfternoonVacationType]);
+
   const dateRange = getDateRange(startDate, endDate);
   const isMultipleDays = dateRange.length > 1;
 
@@ -134,6 +151,66 @@ export const CheckInWidget = () => {
       setMorningVacationType(vacationType);
     } else {
       setAfternoonVacationType(vacationType);
+    }
+  };
+
+  // 휴가 → 출근 변경 시 처리
+  const handleLocationChangeWithVacationCheck = (period, newLocation) => {
+    const vacation = getVacationForDate(today);
+
+    if (period === "morning") {
+      // 오전 휴가가 등록되어 있고 휴가가 아닌 것으로 변경할 때
+      if (vacation && (vacation.timeType === "MORNING" || vacation.timeType === "FULL") && newLocation !== "휴가") {
+        const typeInfo = VACATION_TYPES[vacation.vacationType];
+        setVacationRemovalAlert({
+          period: "morning",
+          date: today,
+          vacationType: vacation.vacationType,
+          typeLabel: typeInfo?.label || vacation.vacationType,
+          timeType: vacation.timeType,
+        });
+      }
+      setMorningLocation(newLocation);
+      if (newLocation !== "휴가") {
+        setMorningVacationType(null);
+      }
+    } else {
+      // 오후 휴가가 등록되어 있고 휴가가 아닌 것으로 변경할 때
+      if (vacation && (vacation.timeType === "AFTERNOON" || vacation.timeType === "FULL") && newLocation !== "휴가") {
+        const typeInfo = VACATION_TYPES[vacation.vacationType];
+        setVacationRemovalAlert({
+          period: "afternoon",
+          date: today,
+          vacationType: vacation.vacationType,
+          typeLabel: typeInfo?.label || vacation.vacationType,
+          timeType: vacation.timeType,
+        });
+      }
+      setAfternoonLocation(newLocation);
+      if (newLocation !== "휴가") {
+        setAfternoonVacationType(null);
+      }
+    }
+  };
+
+  // 알림 확인 후 휴가 제거
+  const handleConfirmVacationRemoval = () => {
+    if (vacationRemovalAlert) {
+      removeVacation(vacationRemovalAlert.date);
+      setVacationRemovalAlert(null);
+    }
+  };
+
+  // 알림 취소 (휴가 유지)
+  const handleCancelVacationRemoval = () => {
+    if (vacationRemovalAlert) {
+      // 휴가로 다시 변경
+      if (vacationRemovalAlert.period === "morning") {
+        setMorningLocation("휴가");
+      } else {
+        setAfternoonLocation("휴가");
+      }
+      setVacationRemovalAlert(null);
     }
   };
 
@@ -319,12 +396,7 @@ export const CheckInWidget = () => {
             <div className="relative">
               <select
                 value={morningLocation}
-                onChange={(e) => {
-                  setMorningLocation(e.target.value);
-                  if (e.target.value !== "휴가") {
-                    setMorningVacationType(null);
-                  }
-                }}
+                onChange={(e) => handleLocationChangeWithVacationCheck("morning", e.target.value)}
                 className={`w-full px-3 py-2 border rounded-lg text-sm appearance-none cursor-pointer ${
                   morningLocation === "휴가"
                     ? "bg-orange-50 border-orange-200 text-orange-700"
@@ -370,12 +442,7 @@ export const CheckInWidget = () => {
             <div className="relative">
               <select
                 value={afternoonLocation}
-                onChange={(e) => {
-                  setAfternoonLocation(e.target.value);
-                  if (e.target.value !== "휴가") {
-                    setAfternoonVacationType(null);
-                  }
-                }}
+                onChange={(e) => handleLocationChangeWithVacationCheck("afternoon", e.target.value)}
                 className={`w-full px-3 py-2 border rounded-lg text-sm appearance-none cursor-pointer ${
                   afternoonLocation === "휴가"
                     ? "bg-orange-50 border-orange-200 text-orange-700"
@@ -596,6 +663,41 @@ export const CheckInWidget = () => {
           )}
         </div>
       </div>
+
+      {/* Vacation Removal Alert */}
+      {vacationRemovalAlert && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-sm p-5 shadow-xl">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                <AlertTriangle size={20} className="text-amber-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-800 mb-1">휴가 등록 취소</h3>
+                <p className="text-sm text-slate-600">
+                  {vacationRemovalAlert.period === "morning" ? "오전" : "오후"} 시간에
+                  <span className="font-medium text-amber-600"> {vacationRemovalAlert.typeLabel}</span>가
+                  등록되어 있습니다. 출근으로 변경하면 해당 휴가가 취소됩니다.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleCancelVacationRemoval}
+                className="flex-1 px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded-lg hover:bg-slate-200 font-medium"
+              >
+                휴가 유지
+              </button>
+              <button
+                onClick={handleConfirmVacationRemoval}
+                className="flex-1 px-4 py-2 bg-amber-500 text-white text-sm rounded-lg hover:bg-amber-600 font-medium"
+              >
+                휴가 취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Vacation Modal */}
       <VacationModal onSelect={handleVacationSelect} />

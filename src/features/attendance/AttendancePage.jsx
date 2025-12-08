@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AttendanceCalendar } from "./components/AttendanceCalendar";
 import { CheckInPanel } from "./components/CheckInPanel";
 import { VacationStatus } from "./components/VacationStatus";
+import { WorkHistoryWidget } from "./components/WorkHistoryWidget";
 import {
   mockAttendanceRecords,
   mockVacationBalance,
@@ -106,18 +107,19 @@ export function AttendancePage() {
         </p>
       </div>
 
-      {/* Main Content - 2 Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column - Calendar */}
-        <div>
+      {/* Main Content - 2:1 Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Calendar & Work History (2/3) */}
+        <div className="lg:col-span-2 space-y-4">
           <AttendanceCalendar
             records={records}
             onDateSelect={handleDateSelect}
           />
+          <WorkHistoryWidget />
         </div>
 
-        {/* Right Column - Check In & Vacation */}
-        <div className="space-y-4">
+        {/* Right Column - Check In & Vacation (1/3) */}
+        <div className="lg:col-span-1 space-y-4">
           <CheckInPanel />
           <VacationStatus
             balances={vacationBalances}

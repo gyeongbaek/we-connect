@@ -1,11 +1,26 @@
 import { useState } from "react";
-import { Plus, X } from "lucide-react";
+import { X, Trash2 } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { VACATION_TYPES } from "../../../mock/attendanceData";
+import { useVacationStore } from "../../../stores";
 
-export function VacationStatus({ balances, onRequestVacation }) {
+export function VacationStatus({ balances }) {
   const [selectedType, setSelectedType] = useState(null);
   const [showModal, setShowModal] = useState(false);
+
+  const {
+    registerVacation,
+    getVacationsForMonth,
+    removeVacation,
+    getUsedVacationHours,
+  } = useVacationStore();
+
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+
+  // 이번 달 등록된 휴가 목록
+  const monthVacations = getVacationsForMonth(currentYear, currentMonth);
 
   const handleCardClick = (type) => {
     setSelectedType(type);
@@ -18,18 +33,57 @@ export function VacationStatus({ balances, onRequestVacation }) {
   };
 
   const handleSubmitVacation = (vacationData) => {
-    onRequestVacation?.(vacationData);
+    registerVacation(vacationData);
     handleCloseModal();
   };
 
+  const handleRemoveVacation = (date) => {
+    removeVacation(date);
+  };
+
+  // 휴가 시간 기반 잔여 계산 (8시간 = 1일)
+  const getVacationHoursInfo = (balance) => {
+    const usedHours = getUsedVacationHours(balance.type);
+    const totalHours = balance.total * 8;
+    const remainingHours = totalHours - usedHours;
+
+    return {
+      usedHours,
+      totalHours,
+      remainingHours,
+      usedDays: usedHours / 8,
+      remainingDays: remainingHours / 8,
+    };
+  };
+
   const getStatusText = (balance) => {
-    if (balance.remaining === 0) {
+    const info = getVacationHoursInfo(balance);
+
+    if (info.remainingHours <= 0) {
       return "소진";
     }
-    if (balance.used === 0 && balance.total > 0) {
-      return `신청가능(${balance.total}일)`;
+    if (info.usedHours === 0 && info.totalHours > 0) {
+      return `${info.totalHours}시간`;
     }
-    return `${balance.remaining}/${balance.total}일`;
+    return `${info.remainingHours}/${info.totalHours}시간`;
+  };
+
+  const formatTimeType = (timeType) => {
+    switch (timeType) {
+      case "MORNING":
+        return "오전";
+      case "AFTERNOON":
+        return "오후";
+      case "FULL":
+        return "종일";
+      default:
+        return timeType;
+    }
+  };
+
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    return `${date.getMonth() + 1}/${date.getDate()}`;
   };
 
   return (
@@ -37,13 +91,15 @@ export function VacationStatus({ balances, onRequestVacation }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-16 text-semibold">휴가 현황</h3>
+        <span className="text-xs text-slate-400">1일 = 8시간</span>
       </div>
 
       {/* Vacation Cards Grid */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2 mb-4">
         {balances.map((balance) => {
           const typeInfo = VACATION_TYPES[balance.type];
-          const isAvailable = balance.remaining > 0;
+          const hoursInfo = getVacationHoursInfo(balance);
+          const isAvailable = hoursInfo.remainingHours > 0;
 
           return (
             <button
@@ -72,11 +128,60 @@ export function VacationStatus({ balances, onRequestVacation }) {
         })}
       </div>
 
+      {/* 등록된 휴가 목록 */}
+      {monthVacations.length > 0 && (
+        <div className="border-t border-slate-100 pt-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-slate-500 font-medium">
+              {currentMonth + 1}월 등록된 휴가
+            </span>
+            <span className="text-xs text-slate-400">
+              {monthVacations.reduce(
+                (sum, v) => sum + (v.timeType === "FULL" ? 8 : 4),
+                0
+              )}
+              시간
+            </span>
+          </div>
+          <div className="space-y-1.5 max-h-32 overflow-y-auto">
+            {monthVacations.map((vacation) => {
+              const typeInfo = VACATION_TYPES[vacation.vacationType];
+              return (
+                <div
+                  key={vacation.date}
+                  className="flex items-center justify-between p-2 bg-slate-50 rounded-lg text-xs"
+                >
+                  <div className="flex items-center gap-2">
+                    <span>{typeInfo?.emoji}</span>
+                    <span className="font-medium text-slate-700">
+                      {formatDate(vacation.date)}
+                    </span>
+                    <span className="text-slate-400">
+                      {formatTimeType(vacation.timeType)}
+                    </span>
+                    <span className="text-blue-500">
+                      {vacation.timeType === "FULL" ? "8시간" : "4시간"}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleRemoveVacation(vacation.date)}
+                    className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-red-500"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Vacation Request Modal */}
       {showModal && (
         <VacationRequestModal
           selectedType={selectedType}
           balances={balances}
+          getVacationHoursInfo={getVacationHoursInfo}
           onClose={handleCloseModal}
           onSubmit={handleSubmitVacation}
         />
@@ -85,9 +190,15 @@ export function VacationStatus({ balances, onRequestVacation }) {
   );
 }
 
-function VacationRequestModal({ selectedType, balances, onClose, onSubmit }) {
+function VacationRequestModal({
+  selectedType,
+  balances,
+  getVacationHoursInfo,
+  onClose,
+  onSubmit,
+}) {
   const [type, setType] = useState(selectedType || "PAID");
-  const [timeType, setTimeType] = useState("FULL"); // MORNING, AFTERNOON, FULL, CUSTOM
+  const [timeType, setTimeType] = useState("FULL");
   const [startDate, setStartDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -95,8 +206,8 @@ function VacationRequestModal({ selectedType, balances, onClose, onSubmit }) {
     new Date().toISOString().split("T")[0]
   );
 
-  const typeInfo = VACATION_TYPES[type];
   const balance = balances.find((b) => b.type === type);
+  const hoursInfo = balance ? getVacationHoursInfo(balance) : null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -105,7 +216,6 @@ function VacationRequestModal({ selectedType, balances, onClose, onSubmit }) {
       timeType,
       startDate,
       endDate,
-      days: timeType === "FULL" ? 1 : 0.5,
     });
   };
 
@@ -136,9 +246,10 @@ function VacationRequestModal({ selectedType, balances, onClose, onSubmit }) {
                 </option>
               ))}
             </select>
-            {balance && (
+            {hoursInfo && (
               <p className="text-10 text-[var(--grayLv3)] mt-1">
-                잔여: {balance.remaining}일 / {balance.total}일
+                잔여: {hoursInfo.remainingHours}시간 / {hoursInfo.totalHours}
+                시간 ({hoursInfo.remainingDays}일)
               </p>
             )}
           </div>
@@ -148,12 +259,11 @@ function VacationRequestModal({ selectedType, balances, onClose, onSubmit }) {
             <label className="text-12 text-[var(--grayLv3)] mb-1 block">
               휴가 시간
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {[
-                { value: "MORNING", label: "오전 휴가 (9-12)" },
-                { value: "AFTERNOON", label: "오후 휴가 (13-18)" },
-                { value: "FULL", label: "종일 휴가 (9-18)" },
-                { value: "CUSTOM", label: "시간 지정" },
+                { value: "MORNING", label: "오전 (4시간)" },
+                { value: "AFTERNOON", label: "오후 (4시간)" },
+                { value: "FULL", label: "종일 (8시간)" },
               ].map((option) => (
                 <button
                   key={option.value}
@@ -192,6 +302,7 @@ function VacationRequestModal({ selectedType, balances, onClose, onSubmit }) {
                 type="date"
                 className="w-full h-10 rounded-md border border-[var(--grayLv2)] px-3 text-14"
                 value={endDate}
+                min={startDate}
                 onChange={(e) => setEndDate(e.target.value)}
               />
             </div>
