@@ -1,8 +1,8 @@
 import { Menu, Bell } from "lucide-react";
-import { useAuth } from "../../hooks/useAuth";
+import { useAppStore } from "../../stores";
 
 export function Header({ title, onMenuClick }) {
-  const { user } = useAuth();
+  const { currentUser: user } = useAppStore();
 
   return (
     <header className="h-16 bg-slate-50 flex items-center justify-between px-6 lg:px-8">

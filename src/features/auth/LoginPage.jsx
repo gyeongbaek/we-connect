@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import { useAppStore } from "../../stores";
 import { users } from "../../mock/userData";
 
 export function LoginPage() {
@@ -8,7 +8,7 @@ export function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login } = useAppStore();
 
   const handleNicknameLogin = async (e) => {
     e.preventDefault();
@@ -114,7 +114,7 @@ export function LoginPage() {
                   onChange={(e) => setNickname(e.target.value)}
                   placeholder="예: Hati, Binky, Licat"
                   disabled={isLoading}
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:bg-slate-100 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   autoFocus
                 />
               </div>

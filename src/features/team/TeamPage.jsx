@@ -10,10 +10,10 @@ import {
   mockQuickNotes,
   calculateTeamStatusSummary,
 } from "../../mock/teamData";
-import { useAuth } from "../../hooks/useAuth";
+import { useAppStore } from "../../stores";
 
 export function TeamPage() {
-  const { user } = useAuth();
+  const { currentUser: user } = useAppStore();
   const [teamMembers] = useState(mockTeamMembers);
   const [meetings] = useState(mockTodayMeetings);
   const [quickNotes, setQuickNotes] = useState(mockQuickNotes);

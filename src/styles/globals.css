@@ -27,16 +27,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Links */
-a {
-  color: var(--primary);
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
 /* Buttons */
 button {
   font-family: inherit;
@@ -47,12 +37,6 @@ button {
 code,
 pre {
   font-family: var(--font-code);
-}
-
-/* Focus visible */
-:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
 }
 
 /* Selection */

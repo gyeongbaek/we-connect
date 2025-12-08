@@ -1,10 +1,10 @@
-import { useAuth } from "../../hooks/useAuth";
+import { useAppStore } from "../../stores";
 import { Mail, Building2, Briefcase, Award, Calendar, LogOut } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 export function ProfilePage() {
-  const { user, logout } = useAuth();
+  const { currentUser: user, logout } = useAppStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {

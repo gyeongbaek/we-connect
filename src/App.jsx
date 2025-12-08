@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./hooks/useAuth";
+import { AppProvider, UIProvider } from "./stores";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Layout } from "./components/layout";
 import { LoginPage } from "./features/auth/LoginPage";
@@ -14,7 +14,8 @@ import { ProfilePage } from "./features/profile/ProfilePage";
 
 function App() {
   return (
-    <AuthProvider>
+    <AppProvider>
+      <UIProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -38,7 +39,8 @@ function App() {
           </Route>
         </Routes>
       </BrowserRouter>
-    </AuthProvider>
+      </UIProvider>
+    </AppProvider>
   );
 }
 
