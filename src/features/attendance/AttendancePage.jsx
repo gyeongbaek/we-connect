@@ -118,7 +118,7 @@ export function AttendancePage() {
 
         {/* Right Column - Check In & Vacation */}
         <div className="space-y-4">
-          <CheckInPanel onSubmit={handleCheckIn} vacationBalances={vacationBalances} />
+          <CheckInPanel />
           <VacationStatus
             balances={vacationBalances}
             onRequestVacation={handleVacationRequest}

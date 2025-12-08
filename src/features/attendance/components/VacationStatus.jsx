@@ -37,15 +37,6 @@ export function VacationStatus({ balances, onRequestVacation }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-16 text-semibold">휴가 현황</h3>
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-1"
-          onClick={() => setShowModal(true)}
-        >
-          <Plus className="h-3 w-3" />
-          휴가 신청
-        </Button>
       </div>
 
       {/* Vacation Cards Grid */}
@@ -70,7 +61,9 @@ export function VacationStatus({ balances, onRequestVacation }) {
                 {typeInfo.label}
               </div>
               <div
-                className={`text-10 ${isAvailable ? "text-[var(--grayLv3)]" : "text-[var(--error)]"}`}
+                className={`text-10 ${
+                  isAvailable ? "text-[var(--grayLv3)]" : "text-[var(--error)]"
+                }`}
               >
                 {getStatusText(balance)}
               </div>

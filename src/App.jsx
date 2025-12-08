@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AppProvider, UIProvider } from "./stores";
+import { AppProvider, UIProvider, AttendanceProvider, VacationProvider } from "./stores";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Layout } from "./components/layout";
 import { LoginPage } from "./features/auth/LoginPage";
@@ -16,29 +16,33 @@ function App() {
   return (
     <AppProvider>
       <UIProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Navigate to="/attendance" replace />} />
-            <Route path="attendance" element={<AttendancePage />} />
-            <Route path="tasks" element={<TasksPage />} />
-            <Route path="projects" element={<ProjectsPage />} />
-            <Route path="projects/new" element={<ProjectAddPage />} />
-            <Route path="projects/:projectId" element={<ProjectDetailPage />} />
-            <Route path="projects/:projectId/edit" element={<ProjectEditPage />} />
-            <Route path="team" element={<TeamPage />} />
-            <Route path="profile" element={<ProfilePage />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+        <AttendanceProvider>
+          <VacationProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route
+                  path="/"
+                  element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<Navigate to="/attendance" replace />} />
+                  <Route path="attendance" element={<AttendancePage />} />
+                  <Route path="tasks" element={<TasksPage />} />
+                  <Route path="projects" element={<ProjectsPage />} />
+                  <Route path="projects/new" element={<ProjectAddPage />} />
+                  <Route path="projects/:projectId" element={<ProjectDetailPage />} />
+                  <Route path="projects/:projectId/edit" element={<ProjectEditPage />} />
+                  <Route path="team" element={<TeamPage />} />
+                  <Route path="profile" element={<ProfilePage />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </VacationProvider>
+        </AttendanceProvider>
       </UIProvider>
     </AppProvider>
   );
