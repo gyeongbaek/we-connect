@@ -7,6 +7,7 @@ import { AttendancePage } from "./features/attendance/AttendancePage";
 import { TasksPage } from "./features/tasks/TasksPage";
 import { ProjectsPage } from "./features/projects/ProjectsPage";
 import { ProjectAddPage } from "./features/projects/ProjectAddPage";
+import { ProjectDetailPage } from "./features/projects/ProjectDetailPage";
 import { ProjectEditPage } from "./features/projects/ProjectEditPage";
 import { TeamPage } from "./features/team/TeamPage";
 import { ProfilePage } from "./features/profile/ProfilePage";
@@ -30,6 +31,7 @@ function App() {
             <Route path="tasks" element={<TasksPage />} />
             <Route path="projects" element={<ProjectsPage />} />
             <Route path="projects/new" element={<ProjectAddPage />} />
+            <Route path="projects/:projectId" element={<ProjectDetailPage />} />
             <Route path="projects/:projectId/edit" element={<ProjectEditPage />} />
             <Route path="team" element={<TeamPage />} />
             <Route path="profile" element={<ProfilePage />} />

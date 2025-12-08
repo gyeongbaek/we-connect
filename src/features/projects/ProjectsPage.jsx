@@ -65,8 +65,8 @@ export function ProjectsPage() {
     navigate("/projects/new");
   };
 
-  const handleEditProject = (project) => {
-    navigate(`/projects/${project.id}/edit`);
+  const handleViewProject = (project) => {
+    navigate(`/projects/${project.id}`);
   };
 
   const renderProjectGroup = (status, label) => {
@@ -91,7 +91,7 @@ export function ProjectsPage() {
             <ProjectCard
               key={project.id}
               project={project}
-              onClick={() => handleEditProject(project)}
+              onClick={() => handleViewProject(project)}
             />
           ))}
         </div>

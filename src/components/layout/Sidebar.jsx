@@ -48,15 +48,11 @@ export function Sidebar({ isOpen, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-[var(--grayLv2)]">
           <h1
-            className="text-24 text-bold flex items-center gap-2"
+            className="text-24 text-bold flex items-center gap-1"
             style={{ color: "var(--primary)" }}
           >
-            <img
-              src="/images/favicon.svg"
-              alt=""
-              className="inline-block mr-2 w-8 h-8"
-            />
-            we:connect
+            <img src="/images/favicon.svg" alt="" className="mr-2 w-6 h-6" />
+            <span>we:connect</span>
           </h1>
           <Button
             variant="ghost"
