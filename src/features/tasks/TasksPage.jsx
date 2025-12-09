@@ -1,27 +1,59 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Calendar, Send } from "lucide-react";
+import { ChevronLeft, ChevronRight, Send, BarChart2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "../../components/ui/button";
 import { Checklist } from "./components/Checklist";
 import { Timetable } from "./components/Timetable";
-import {
-  mockProjects,
-  mockChecklistItems,
-  mockTimeBlocks,
-  groupChecklistByProject,
-  calculateTimeStats,
-} from "../../mock/taskData";
+import { PomodoroTimer } from "./components/PomodoroTimer";
+import { useVacationStore, useAttendanceStore, useTaskStore } from "../../stores";
 
 export function TasksPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [checklistItems, setChecklistItems] = useState(mockChecklistItems);
-  const [timeBlocks, setTimeBlocks] = useState(mockTimeBlocks);
   const [isPublic, setIsPublic] = useState(false);
 
-  const { projectGroups, shortTermTasks } = groupChecklistByProject(
+  // 업무 스토어
+  const {
+    projects,
     checklistItems,
-    mockProjects
-  );
-  const stats = calculateTimeStats(timeBlocks);
+    timeBlocks,
+    addChecklistItem,
+    toggleChecklistItem,
+    updateChecklistStatus,
+    addTimeBlock,
+    updateTimeBlock,
+    deleteTimeBlock,
+    getProjectGroups,
+    getTimeStats,
+  } = useTaskStore();
+
+  // 휴가 및 근태 정보 가져오기
+  const { getVacationForDate } = useVacationStore();
+  const { registeredAttendance, startTime, endTime, lunchStart, lunchEnd } = useAttendanceStore();
+
+  // 현재 날짜의 휴가 정보 확인
+  const dateStr = currentDate.toISOString().split("T")[0];
+  const todayVacation = getVacationForDate(dateStr);
+
+  // 휴가 정보를 타임테이블 형식으로 변환
+  const getVacationType = (vacation) => {
+    if (!vacation) return null;
+    if (vacation.timeType === "FULL") return "연차";
+    if (vacation.timeType === "MORNING") return "오전반차";
+    if (vacation.timeType === "AFTERNOON") return "오후반차";
+    return null;
+  };
+  const vacationInfo = todayVacation ? { type: getVacationType(todayVacation) } : null;
+
+  // 현재 날짜의 출근 정보 확인
+  const todayAttendance = registeredAttendance[dateStr] || {
+    startTime,
+    endTime,
+    lunchStart,
+    lunchEnd,
+  };
+
+  const { projectGroups, shortTermTasks } = getProjectGroups();
+  const stats = getTimeStats(todayAttendance.lunchStart, todayAttendance.lunchEnd);
 
   const formatDate = (date) => {
     const year = date.getFullYear();
@@ -44,50 +76,6 @@ export function TasksPage() {
     const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() + 1);
     setCurrentDate(newDate);
-  };
-
-  const handleAddChecklistItem = ({ content, projectId }) => {
-    const newItem = {
-      id: `c${Date.now()}`,
-      userId: "user1",
-      date: currentDate.toISOString().split("T")[0],
-      content,
-      projectId,
-      isCompleted: false,
-      order: checklistItems.length + 1,
-    };
-    setChecklistItems([...checklistItems, newItem]);
-  };
-
-  const handleToggleItem = (itemId) => {
-    setChecklistItems(
-      checklistItems.map((item) =>
-        item.id === itemId ? { ...item, isCompleted: !item.isCompleted } : item
-      )
-    );
-  };
-
-  const handleAddTimeBlock = (blockData) => {
-    const newBlock = {
-      id: `t${Date.now()}`,
-      userId: "user1",
-      date: currentDate.toISOString().split("T")[0],
-      ...blockData,
-      isCompleted: false,
-    };
-    setTimeBlocks([...timeBlocks, newBlock]);
-  };
-
-  const handleUpdateTimeBlock = (blockId, updates) => {
-    setTimeBlocks(
-      timeBlocks.map((block) =>
-        block.id === blockId ? { ...block, ...updates } : block
-      )
-    );
-  };
-
-  const handleDeleteTimeBlock = (blockId) => {
-    setTimeBlocks(timeBlocks.filter((block) => block.id !== blockId));
   };
 
   const handleSendDiscord = () => {
@@ -127,30 +115,42 @@ export function TasksPage() {
       </div>
 
       {/* Main Content */}
-      <div
-        className="grid grid-cols-1 lg:grid-cols-2 gap-4"
-        style={{ minHeight: "600px" }}
-      >
-        {/* Left - Checklist */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Left - Pomodoro & Timetable */}
+        <div className="flex flex-col">
+          <PomodoroTimer />
+          <Timetable
+            timeBlocks={timeBlocks}
+            stats={stats}
+            isPublic={isPublic}
+            onTogglePublic={() => setIsPublic(!isPublic)}
+            onAddBlock={addTimeBlock}
+            onUpdateBlock={updateTimeBlock}
+            onDeleteBlock={deleteTimeBlock}
+            vacationInfo={vacationInfo}
+            attendanceInfo={todayAttendance}
+          />
+        </div>
+
+        {/* Right - Checklist */}
         <Checklist
           projectGroups={projectGroups}
           shortTermTasks={shortTermTasks}
-          projects={mockProjects}
-          onAddItem={handleAddChecklistItem}
-          onToggleItem={handleToggleItem}
-        />
-
-        {/* Right - Timetable */}
-        <Timetable
-          timeBlocks={timeBlocks}
-          stats={stats}
-          isPublic={isPublic}
-          onTogglePublic={() => setIsPublic(!isPublic)}
-          onAddBlock={handleAddTimeBlock}
-          onUpdateBlock={handleUpdateTimeBlock}
-          onDeleteBlock={handleDeleteTimeBlock}
+          projects={projects}
+          onAddItem={addChecklistItem}
+          onToggleItem={toggleChecklistItem}
+          onUpdateItemStatus={updateChecklistStatus}
         />
       </div>
+
+      {/* Work Summary Link */}
+      <Link
+        to="/tasks/summary"
+        className="flex items-center justify-center gap-2 p-4 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+      >
+        <BarChart2 className="h-4 w-4 text-slate-500" />
+        <span className="text-sm font-medium text-slate-600">업무 요약 보기</span>
+      </Link>
     </div>
   );
 }

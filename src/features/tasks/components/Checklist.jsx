@@ -7,9 +7,74 @@ import {
   Pin,
   GripVertical,
 } from "lucide-react";
-import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Select } from "../../../components/ui/select";
+
+// 체크리스트 상태 정의
+const STATUS = {
+  PENDING: "pending", // 미완료
+  IN_PROGRESS: "in_progress", // 진행 중
+  COMPLETED: "completed", // 완료
+};
+
+// 커스텀 아이콘 컴포넌트들
+const CircleEmpty = ({ className }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <circle cx="12" cy="12" r="10" />
+  </svg>
+);
+
+const CircleHalf = ({ className }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 2a10 10 0 0 1 0 20" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+const CircleFilled = ({ className }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <circle cx="12" cy="12" r="10" />
+  </svg>
+);
+
+const STATUS_CONFIG = {
+  [STATUS.PENDING]: {
+    icon: CircleEmpty,
+    color: "text-slate-400",
+    bgColor: "bg-slate-100",
+    label: "미완료",
+  },
+  [STATUS.IN_PROGRESS]: {
+    icon: CircleHalf,
+    color: "text-blue-500",
+    bgColor: "bg-blue-100",
+    label: "진행 중",
+  },
+  [STATUS.COMPLETED]: {
+    icon: CircleFilled,
+    color: "text-blue-600",
+    bgColor: "bg-blue-100",
+    label: "완료",
+  },
+};
 
 export function Checklist({
   projectGroups,
@@ -17,31 +82,29 @@ export function Checklist({
   projects,
   onAddItem,
   onToggleItem,
+  onUpdateItemStatus,
   onDragStart,
 }) {
   const [selectedProject, setSelectedProject] = useState("");
   const [newTaskContent, setNewTaskContent] = useState("");
-  const [newShortTask, setNewShortTask] = useState("");
   const [expandedProjects, setExpandedProjects] = useState(
     projectGroups.map((g) => g.project.id)
   );
 
-  const handleAddProjectTask = () => {
-    if (!newTaskContent.trim() || !selectedProject) return;
+  const handleAddTask = () => {
+    if (!newTaskContent.trim()) return;
     onAddItem({
       content: newTaskContent.trim(),
-      projectId: selectedProject,
+      projectId: selectedProject || null, // 프로젝트 미선택 시 단기 업무
     });
     setNewTaskContent("");
+    // 프로젝트 선택 상태 유지
   };
 
-  const handleAddShortTask = () => {
-    if (!newShortTask.trim()) return;
-    onAddItem({
-      content: newShortTask.trim(),
-      projectId: null,
-    });
-    setNewShortTask("");
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleAddTask();
+    }
   };
 
   const toggleProject = (projectId) => {
@@ -64,144 +127,189 @@ export function Checklist({
     onDragStart?.(item);
   };
 
+  // 상태 순환: pending -> in_progress -> completed -> pending
+  const cycleStatus = (item) => {
+    const currentStatus = item.status || STATUS.PENDING;
+    let nextStatus;
+
+    if (currentStatus === STATUS.PENDING) {
+      nextStatus = STATUS.IN_PROGRESS;
+    } else if (currentStatus === STATUS.IN_PROGRESS) {
+      nextStatus = STATUS.COMPLETED;
+    } else {
+      nextStatus = STATUS.PENDING;
+    }
+
+    onUpdateItemStatus?.(item.id, nextStatus);
+  };
+
+  const renderStatusIcon = (item) => {
+    const status = item.status || STATUS.PENDING;
+    const config = STATUS_CONFIG[status];
+    const Icon = config.icon;
+
+    return (
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          cycleStatus(item);
+        }}
+        className={`p-0.5 rounded-full hover:${config.bgColor} transition-colors`}
+        title={`${config.label} (클릭하여 상태 변경)`}
+      >
+        <Icon className={`h-4 w-4 ${config.color}`} />
+      </button>
+    );
+  };
+
+  const renderTaskItem = (item, project = null) => {
+    const status = item.status || STATUS.PENDING;
+    const isCompleted = status === STATUS.COMPLETED;
+
+    return (
+      <li
+        key={item.id}
+        draggable
+        onDragStart={(e) => handleDragStart(e, item, project)}
+        className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-slate-50 cursor-grab active:cursor-grabbing group"
+      >
+        <GripVertical className="h-3 w-3 text-slate-300 opacity-0 group-hover:opacity-100 shrink-0" />
+        {renderStatusIcon(item)}
+        <span
+          className={`text-sm flex-1 ${
+            isCompleted ? "line-through text-slate-400" : "text-slate-700"
+          }`}
+        >
+          {item.content}
+        </span>
+        {status === STATUS.IN_PROGRESS && (
+          <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded-full">
+            진행 중
+          </span>
+        )}
+      </li>
+    );
+  };
+
   return (
-    <div className="bg-[var(--background)] rounded-lg border border-[var(--grayLv2)] p-4 h-full">
-      <h3 className="text-16 text-semibold mb-4 flex items-center gap-2">
-        📋 체크리스트
+    <div className="bg-white rounded-lg border border-slate-200 p-4 flex flex-col" style={{ maxHeight: "780px" }}>
+      <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
+        <span>📋</span> 체크리스트
       </h3>
 
-      {/* Drag Hint */}
-      <p className="text-12 text-[var(--grayLv3)] mb-4 flex items-center gap-1">
-        🔗 타임테이블로 드래그하세요
-      </p>
-
-      {/* Project Task Input */}
+      {/* 업무 추가 입력 - 프로젝트 선택 + 내용 입력만 */}
       <div className="space-y-2 mb-4">
         <Select
           value={selectedProject}
           onChange={(e) => setSelectedProject(e.target.value)}
+          className="text-sm"
         >
-          <option value="">📁 프로젝트 선택...</option>
+          <option value="">📌 단기 업무</option>
           {projects.map((project) => (
             <option key={project.id} value={project.id}>
-              {project.name}
+              📁 {project.name}
             </option>
           ))}
         </Select>
         <div className="flex gap-2">
           <Input
-            placeholder="업무 내용 입력..."
+            placeholder="업무 내용을 입력하세요..."
             value={newTaskContent}
             onChange={(e) => setNewTaskContent(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAddProjectTask()}
+            onKeyDown={handleKeyDown}
+            className="text-sm"
           />
-          <Button size="icon" onClick={handleAddProjectTask}>
+          <button
+            onClick={handleAddTask}
+            disabled={!newTaskContent.trim()}
+            className="px-3 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-300 text-white rounded-lg transition-colors"
+          >
             <Plus className="h-4 w-4" />
-          </Button>
+          </button>
         </div>
       </div>
 
-      {/* Divider */}
-      <div className="flex items-center my-4">
-        <div className="flex-1 border-t border-[var(--grayLv2)]" />
-        <span className="px-3 text-12 text-[var(--grayLv3)]">또는</span>
-        <div className="flex-1 border-t border-[var(--grayLv2)]" />
+      {/* 상태 범례 */}
+      <div className="flex items-center gap-3 text-[10px] text-slate-400 mb-3 pb-3 border-b border-slate-100">
+        <span className="flex items-center gap-1">
+          <CircleEmpty className="h-3 w-3 text-slate-400" /> 미완료
+        </span>
+        <span className="flex items-center gap-1">
+          <CircleHalf className="h-3 w-3 text-blue-500" /> 진행 중
+        </span>
+        <span className="flex items-center gap-1">
+          <CircleFilled className="h-3 w-3 text-blue-600" /> 완료
+        </span>
       </div>
 
-      {/* Short Task Input */}
-      <div className="flex gap-2 mb-6">
-        <Input
-          placeholder="단기 업무 추가..."
-          value={newShortTask}
-          onChange={(e) => setNewShortTask(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleAddShortTask()}
-        />
-        <Button size="icon" onClick={handleAddShortTask}>
-          <Plus className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <div className="border-t border-[var(--grayLv2)] pt-4 space-y-4 max-h-[400px] overflow-y-auto">
-        {/* Project Groups */}
+      {/* 체크리스트 목록 */}
+      <div className="flex-1 overflow-y-auto space-y-3">
+        {/* 프로젝트별 그룹 */}
         {projectGroups.map(({ project, items }) => (
           <div key={project.id}>
             <button
-              className="flex items-center gap-2 w-full text-left py-1 hover:bg-[var(--grayLv1)] rounded px-1"
+              className="flex items-center gap-2 w-full text-left py-1 hover:bg-slate-50 rounded px-1"
               onClick={() => toggleProject(project.id)}
             >
               {expandedProjects.includes(project.id) ? (
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-4 w-4 text-slate-400" />
               ) : (
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4 text-slate-400" />
               )}
-              <Folder
-                className="h-4 w-4"
-                style={{ color: project.color }}
-              />
-              <span className="text-14 text-semibold">{project.name}</span>
+              <Folder className="h-4 w-4" style={{ color: project.color }} />
+              <span className="text-sm font-medium text-slate-700">
+                {project.name}
+              </span>
+              <span className="text-xs text-slate-400 ml-auto">
+                {
+                  items.filter(
+                    (i) => (i.status || STATUS.PENDING) === STATUS.COMPLETED
+                  ).length
+                }
+                /{items.length}
+              </span>
             </button>
 
             {expandedProjects.includes(project.id) && (
-              <ul className="ml-6 mt-1 space-y-1">
-                {items.map((item) => (
-                  <li
-                    key={item.id}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, item, project)}
-                    className="flex items-center gap-2 py-1 px-2 rounded hover:bg-[var(--grayLv1)] cursor-grab active:cursor-grabbing group"
-                  >
-                    <GripVertical className="h-3 w-3 text-[var(--grayLv3)] opacity-0 group-hover:opacity-100" />
-                    <input
-                      type="checkbox"
-                      checked={item.isCompleted}
-                      onChange={() => onToggleItem(item.id)}
-                      className="h-4 w-4 rounded border-[var(--grayLv2)]"
-                    />
-                    <span
-                      className={`text-14 ${item.isCompleted ? "line-through text-[var(--grayLv3)]" : ""}`}
-                    >
-                      {item.content}
-                    </span>
-                  </li>
-                ))}
+              <ul className="ml-6 mt-1 space-y-0.5">
+                {items.map((item) => renderTaskItem(item, project))}
               </ul>
             )}
           </div>
         ))}
 
-        {/* Short Term Tasks */}
+        {/* 단기 업무 */}
         {shortTermTasks.length > 0 && (
           <div>
             <div className="flex items-center gap-2 py-1 px-1">
-              <Pin className="h-4 w-4 text-[var(--grayLv3)]" />
-              <span className="text-14 text-semibold">단기 업무</span>
+              <Pin className="h-4 w-4 text-slate-400" />
+              <span className="text-sm font-medium text-slate-700">
+                단기 업무
+              </span>
+              <span className="text-xs text-slate-400 ml-auto">
+                {
+                  shortTermTasks.filter(
+                    (i) => (i.status || STATUS.PENDING) === STATUS.COMPLETED
+                  ).length
+                }
+                /{shortTermTasks.length}
+              </span>
             </div>
-            <ul className="ml-6 mt-1 space-y-1">
-              {shortTermTasks.map((item) => (
-                <li
-                  key={item.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, item, null)}
-                  className="flex items-center gap-2 py-1 px-2 rounded hover:bg-[var(--grayLv1)] cursor-grab active:cursor-grabbing group"
-                >
-                  <GripVertical className="h-3 w-3 text-[var(--grayLv3)] opacity-0 group-hover:opacity-100" />
-                  <input
-                    type="checkbox"
-                    checked={item.isCompleted}
-                    onChange={() => onToggleItem(item.id)}
-                    className="h-4 w-4 rounded border-[var(--grayLv2)]"
-                  />
-                  <span
-                    className={`text-14 ${item.isCompleted ? "line-through text-[var(--grayLv3)]" : ""}`}
-                  >
-                    {item.content}
-                  </span>
-                </li>
-              ))}
+            <ul className="ml-6 mt-1 space-y-0.5">
+              {shortTermTasks.map((item) => renderTaskItem(item, null))}
             </ul>
+          </div>
+        )}
+
+        {/* 빈 상태 */}
+        {projectGroups.length === 0 && shortTermTasks.length === 0 && (
+          <div className="text-center py-8 text-slate-400 text-sm">
+            업무를 추가해주세요
           </div>
         )}
       </div>
     </div>
   );
 }
+
+export { STATUS };

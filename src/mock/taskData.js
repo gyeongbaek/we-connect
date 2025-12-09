@@ -6,6 +6,7 @@ export const mockProjects = [
 ];
 
 // 체크리스트 아이템
+// status: "pending" (미완료), "in_progress" (진행 중), "completed" (완료)
 export const mockChecklistItems = [
   {
     id: "c1",
@@ -13,6 +14,7 @@ export const mockChecklistItems = [
     date: "2024-12-06",
     content: "API 설계 문서 작성",
     projectId: "p1",
+    status: "in_progress",
     isCompleted: false,
     order: 1,
   },
@@ -22,6 +24,7 @@ export const mockChecklistItems = [
     date: "2024-12-06",
     content: "로그인 페이지 구현",
     projectId: "p1",
+    status: "pending",
     isCompleted: false,
     order: 2,
   },
@@ -31,6 +34,7 @@ export const mockChecklistItems = [
     date: "2024-12-06",
     content: "DB 스키마 설계",
     projectId: "p1",
+    status: "completed",
     isCompleted: true,
     order: 3,
   },
@@ -40,6 +44,7 @@ export const mockChecklistItems = [
     date: "2024-12-06",
     content: "발표 자료 준비",
     projectId: "p2",
+    status: "pending",
     isCompleted: false,
     order: 1,
   },
@@ -49,6 +54,7 @@ export const mockChecklistItems = [
     date: "2024-12-06",
     content: "참석자 명단 정리",
     projectId: "p2",
+    status: "in_progress",
     isCompleted: false,
     order: 2,
   },
@@ -58,6 +64,7 @@ export const mockChecklistItems = [
     date: "2024-12-06",
     content: "점심 미팅 준비",
     projectId: null,
+    status: "pending",
     isCompleted: false,
     order: 1,
   },
@@ -67,26 +74,14 @@ export const mockChecklistItems = [
     date: "2024-12-06",
     content: "이메일 회신",
     projectId: null,
-    isCompleted: false,
+    status: "completed",
+    isCompleted: true,
     order: 2,
   },
 ];
 
-// 타임테이블 블록
-export const mockTimeBlocks = [
-  {
-    id: "t1",
-    userId: "user1",
-    date: "2024-12-06",
-    startTime: "13:00",
-    endTime: "14:00",
-    content: "점심 식사",
-    type: "LUNCH",
-    projectId: null,
-    checklistItemId: null,
-    isCompleted: false,
-  },
-];
+// 타임테이블 블록 (휴게 시간은 시스템에서 자동 생성됨)
+export const mockTimeBlocks = [];
 
 // 체크리스트를 프로젝트별로 그룹핑
 export function groupChecklistByProject(items, projects) {
@@ -114,23 +109,44 @@ export function groupChecklistByProject(items, projects) {
   };
 }
 
-// 시간 통계 계산
-export function calculateTimeStats(timeBlocks) {
+// 시간 통계 계산 (휴게 시간 제외)
+export function calculateTimeStats(timeBlocks, lunchStart = 12, lunchEnd = 13) {
   let workMinutes = 0;
   let breakMinutes = 0;
   let completedMinutes = 0;
 
+  const lunchStartMin = lunchStart * 60;
+  const lunchEndMin = lunchEnd * 60;
+
   timeBlocks.forEach((block) => {
+    if (block.type === "LUNCH" || block.type === "BREAK") {
+      const [startH, startM] = block.startTime.split(":").map(Number);
+      const [endH, endM] = block.endTime.split(":").map(Number);
+      const duration = (endH * 60 + endM) - (startH * 60 + startM);
+      breakMinutes += duration;
+      return;
+    }
+
     const [startH, startM] = block.startTime.split(":").map(Number);
     const [endH, endM] = block.endTime.split(":").map(Number);
-    const duration = (endH * 60 + endM) - (startH * 60 + startM);
+    const blockStart = startH * 60 + startM;
+    const blockEnd = endH * 60 + endM;
 
-    if (block.type === "LUNCH" || block.type === "BREAK") {
-      breakMinutes += duration;
-    } else {
-      workMinutes += duration;
+    // 휴게 시간과 겹치는 부분 계산
+    let effectiveDuration = blockEnd - blockStart;
+
+    // 블록이 휴게 시간과 겹치는 경우
+    if (blockStart < lunchEndMin && blockEnd > lunchStartMin) {
+      const overlapStart = Math.max(blockStart, lunchStartMin);
+      const overlapEnd = Math.min(blockEnd, lunchEndMin);
+      const overlapDuration = overlapEnd - overlapStart;
+      effectiveDuration -= overlapDuration;
+    }
+
+    if (effectiveDuration > 0) {
+      workMinutes += effectiveDuration;
       if (block.isCompleted) {
-        completedMinutes += duration;
+        completedMinutes += effectiveDuration;
       }
     }
   });

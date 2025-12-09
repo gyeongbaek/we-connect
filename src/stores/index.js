@@ -10,3 +10,4 @@ export {
   calculateOvertimeHours,
 } from "./useAttendanceStore";
 export { VacationProvider, useVacationStore } from "./useVacationStore";
+export { TaskProvider, useTaskStore } from "./useTaskStore";
