@@ -5,7 +5,11 @@ import { Button } from "../../components/ui/button";
 import { Checklist } from "./components/Checklist";
 import { Timetable } from "./components/Timetable";
 import { PomodoroTimer } from "./components/PomodoroTimer";
-import { useVacationStore, useAttendanceStore, useTaskStore } from "../../stores";
+import {
+  useVacationStore,
+  useAttendanceStore,
+  useTaskStore,
+} from "../../stores";
 
 export function TasksPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -28,7 +32,8 @@ export function TasksPage() {
 
   // 휴가 및 근태 정보 가져오기
   const { getVacationForDate } = useVacationStore();
-  const { registeredAttendance, startTime, endTime, lunchStart, lunchEnd } = useAttendanceStore();
+  const { registeredAttendance, startTime, endTime, lunchStart, lunchEnd } =
+    useAttendanceStore();
 
   // 현재 날짜의 휴가 정보 확인
   const dateStr = currentDate.toISOString().split("T")[0];
@@ -42,7 +47,9 @@ export function TasksPage() {
     if (vacation.timeType === "AFTERNOON") return "오후반차";
     return null;
   };
-  const vacationInfo = todayVacation ? { type: getVacationType(todayVacation) } : null;
+  const vacationInfo = todayVacation
+    ? { type: getVacationType(todayVacation) }
+    : null;
 
   // 현재 날짜의 출근 정보 확인
   const todayAttendance = registeredAttendance[dateStr] || {
@@ -53,7 +60,10 @@ export function TasksPage() {
   };
 
   const { projectGroups, shortTermTasks } = getProjectGroups();
-  const stats = getTimeStats(todayAttendance.lunchStart, todayAttendance.lunchEnd);
+  const stats = getTimeStats(
+    todayAttendance.lunchStart,
+    todayAttendance.lunchEnd
+  );
 
   const formatDate = (date) => {
     const year = date.getFullYear();
@@ -91,14 +101,6 @@ export function TasksPage() {
             오늘의 업무를 기록하고 관리합니다
           </p>
         </div>
-        <Button
-          variant="outline"
-          className="flex items-center gap-2"
-          onClick={handleSendDiscord}
-        >
-          <Send className="h-4 w-4" />
-          Discord 전송
-        </Button>
       </div>
 
       {/* Date Navigation */}
@@ -142,15 +144,6 @@ export function TasksPage() {
           onUpdateItemStatus={updateChecklistStatus}
         />
       </div>
-
-      {/* Work Summary Link */}
-      <Link
-        to="/tasks/summary"
-        className="flex items-center justify-center gap-2 p-4 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
-      >
-        <BarChart2 className="h-4 w-4 text-slate-500" />
-        <span className="text-sm font-medium text-slate-600">업무 요약 보기</span>
-      </Link>
     </div>
   );
 }

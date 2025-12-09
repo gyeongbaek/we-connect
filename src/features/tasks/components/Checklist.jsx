@@ -6,6 +6,7 @@ import {
   Folder,
   Pin,
   GripVertical,
+  Send,
 } from "lucide-react";
 import { Input } from "../../../components/ui/input";
 import { Select } from "../../../components/ui/select";
@@ -120,7 +121,7 @@ export function Checklist({
       "application/json",
       JSON.stringify({
         ...item,
-        projectColor: project?.color || "#8d9299",
+        projectColor: project?.color || "#eab308",
         projectName: project?.name || "단기 업무",
       })
     );
@@ -193,9 +194,17 @@ export function Checklist({
 
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-4 flex flex-col" style={{ maxHeight: "780px" }}>
-      <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
-        <span>📋</span> 체크리스트
-      </h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-base font-semibold flex items-center gap-2">
+          <span>📋</span> 체크리스트
+        </h3>
+        <button
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-black text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors"
+        >
+          <Send className="h-3.5 w-3.5" />
+          Discord 전송
+        </button>
+      </div>
 
       {/* 업무 추가 입력 - 프로젝트 선택 + 내용 입력만 */}
       <div className="space-y-2 mb-4">
@@ -282,7 +291,7 @@ export function Checklist({
         {shortTermTasks.length > 0 && (
           <div>
             <div className="flex items-center gap-2 py-1 px-1">
-              <Pin className="h-4 w-4 text-slate-400" />
+              <Pin className="h-4 w-4 text-yellow-500" />
               <span className="text-sm font-medium text-slate-700">
                 단기 업무
               </span>

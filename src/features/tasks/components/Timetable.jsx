@@ -64,8 +64,17 @@ export function Timetable({
     return Math.round(minutes / 30) * 30;
   };
 
-  // 충돌 확인
+  // 휴게 시간 정보
+  const breakStartMin = (attendanceInfo?.lunchStart || 12) * 60;
+  const breakEndMin = (attendanceInfo?.lunchEnd || 13) * 60;
+
+  // 충돌 확인 (휴게 시간 포함)
   const hasConflict = (startMin, endMin, excludeBlockId = null) => {
+    // 휴게 시간과 겹치는지 확인
+    if (startMin < breakEndMin && endMin > breakStartMin) {
+      return true;
+    }
+
     return timeBlocks.some((block) => {
       if (excludeBlockId && block.id === excludeBlockId) return false;
       if (block.type === "VACATION") return false; // 휴가는 충돌 체크 제외
@@ -101,14 +110,12 @@ export function Timetable({
       if (!hasConflict(startMinutes, endMinutes)) {
         onAddBlock({
           startTime: minutesToTime(startMinutes),
-          endTime: minutesToTime(
-            Math.min(endMinutes, operationHours.end * 60)
-          ),
+          endTime: minutesToTime(Math.min(endMinutes, operationHours.end * 60)),
           content: data.content,
           type: "WORK",
           projectId: data.projectId,
           checklistItemId: data.id,
-          projectColor: data.projectColor || "#8d9299",
+          projectColor: data.projectColor || "#eab308",
           projectName: data.projectName || "단기 업무",
         });
       }
@@ -497,17 +504,16 @@ export function Timetable({
           const canDelete = !isVacation && !isBreak;
 
           // 시스템 블록(휴게/휴가)은 상단에 표시
-          const zIndex = isBreak || isVacation ? 10 : 1;
-          // 휴게: 연한 색 + 작은 영역, 휴가: 불투명, 일반: 반투명
-          const bgColor = isBreak ? `${blockColor}50` : isVacation ? blockColor : `${blockColor}30`;
+          const zIndex = isBreak ? 100 : isVacation ? 10 : 1;
+          // 휴게/일반: 반투명, 휴가: 불투명
+          const bgColor = isVacation
+            ? blockColor
+            : `${blockColor}30`;
 
-          // 휴게 시간은 업무 블록보다 작게 가운데 정렬
-          const breakStyle = isBreak ? {
-            width: "96%",
-            height: `${parseInt(blockStyle.height) * 0.85}px`,
-            left: "2%",
-            top: `${parseInt(blockStyle.top) + parseInt(blockStyle.height) * 0.075}px`,
-          } : {};
+          // 블록 간 여백 (2px 상하)
+          const margin = 2;
+          const adjustedTop = parseInt(blockStyle.top) + margin;
+          const adjustedHeight = Math.max(parseInt(blockStyle.height) - margin * 2, 20);
 
           return (
             <div
@@ -520,16 +526,19 @@ export function Timetable({
                   : ""
               }`}
               style={{
-                ...blockStyle,
+                top: `${adjustedTop}px`,
+                height: `${adjustedHeight}px`,
                 backgroundColor: bgColor,
                 borderColor: `${blockColor}60`,
                 zIndex,
-                left: isBreak ? undefined : "1%",
-                right: isBreak ? undefined : "1%",
-                width: isBreak ? undefined : "98%",
-                ...breakStyle,
+                left: "1%",
+                right: "1%",
+                width: "98%",
+                pointerEvents: isBreak ? "none" : undefined,
               }}
-              onMouseDown={canResize ? (e) => handleBlockMoveDrag(block, e) : undefined}
+              onMouseDown={
+                canResize ? (e) => handleBlockMoveDrag(block, e) : undefined
+              }
             >
               {/* 상단 리사이즈 핸들 */}
               {canResize && (
@@ -550,9 +559,15 @@ export function Timetable({
                   <div className="flex-1 min-w-0">
                     <span
                       className={`text-xs font-medium truncate block ${
-                        isVacation ? "text-white" : isBreak ? "text-slate-600" : ""
+                        isVacation
+                          ? "text-white"
+                          : isBreak
+                          ? "text-slate-600"
+                          : ""
                       }`}
-                      style={{ color: isVacation || isBreak ? undefined : blockColor }}
+                      style={{
+                        color: isVacation || isBreak ? undefined : blockColor,
+                      }}
                     >
                       {isVacation && (
                         <Palmtree className="inline h-3 w-3 mr-1" />
