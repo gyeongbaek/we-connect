@@ -14,7 +14,7 @@ import { cn } from "../../utils/cn";
 import { useAuth } from "../../hooks/useAuth";
 
 const navItems = [
-  { to: "/attendance", icon: Clock, label: "출근 기록" },
+  { to: "/attendance", icon: Clock, label: "근무 기록" },
   { to: "/tasks", icon: FileText, label: "업무 일지" },
   { to: "/projects", icon: FolderKanban, label: "프로젝트" },
   { to: "/team", icon: Users, label: "팀 현황" },

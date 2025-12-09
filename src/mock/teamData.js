@@ -254,22 +254,48 @@ export const mockTodayMeetings = [
 export const mockQuickNotes = [
   {
     id: "q1",
-    content: "점심 같이 드실 분~",
-    emoji: "🍳",
+    content: "점심 옥돌 해장국",
+    emoji: "🍚",
     creatorId: "eB8qDjBaEK",
     creatorName: "Licat",
     time: "12:00",
+    location: "옥돌해장국 제주점",
     participants: ["Licat", "Binky", "Wade"],
+    comments: [],
     createdAt: new Date().toISOString(),
   },
   {
     id: "q2",
-    content: "카페 다녀올게요",
+    content: "유스 주문 받습니다",
     emoji: "☕",
     creatorId: "w303nxvJ8D",
     creatorName: "Allosa",
     time: "15:00",
-    participants: ["Allosa", "Ona"],
+    location: "1층 카페",
+    participants: ["Allosa"],
+    comments: [
+      {
+        id: "c1",
+        text: "아메리카노 아이스요!",
+        authorId: "ODzZq93x0R",
+        authorName: "Binky",
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: "c2",
+        text: "카페라떼 핫으로 부탁드려요~",
+        authorId: "rjzQAaqRz7",
+        authorName: "Ona",
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: "c3",
+        text: "바닐라라떼 아이스 샷추가요",
+        authorId: "210PA1JRzx",
+        authorName: "Wade",
+        createdAt: new Date().toISOString(),
+      },
+    ],
     createdAt: new Date().toISOString(),
   },
 ];
@@ -298,10 +324,10 @@ export function calculateTeamStatusSummary(members) {
 
 // 퀵노트 이모지 옵션
 export const QUICKNOTE_EMOJIS = [
-  { emoji: "🍳", label: "점심" },
+  { emoji: "🍚", label: "밥" },
   { emoji: "☕", label: "카페" },
-  { emoji: "🍺", label: "회식" },
+  { emoji: "🍺", label: "술" },
   { emoji: "🎮", label: "게임" },
-  { emoji: "🏃", label: "운동" },
-  { emoji: "💬", label: "수다" },
+  { emoji: "🏊", label: "운동" },
+  { emoji: "💬", label: "기타" },
 ];

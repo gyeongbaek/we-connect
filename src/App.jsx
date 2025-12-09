@@ -11,6 +11,7 @@ import { ProjectAddPage } from "./features/projects/ProjectAddPage";
 import { ProjectDetailPage } from "./features/projects/ProjectDetailPage";
 import { ProjectEditPage } from "./features/projects/ProjectEditPage";
 import { TeamPage } from "./features/team/TeamPage";
+import { ActivitiesPage } from "./features/team/ActivitiesPage";
 import { ReservationPage } from "./features/reservation/ReservationPage";
 import { ProfilePage } from "./features/profile/ProfilePage";
 
@@ -41,6 +42,7 @@ function App() {
                   <Route path="projects/:projectId" element={<ProjectDetailPage />} />
                   <Route path="projects/:projectId/edit" element={<ProjectEditPage />} />
                   <Route path="team" element={<TeamPage />} />
+                  <Route path="team/activities" element={<ActivitiesPage />} />
                   <Route path="reservation" element={<ReservationPage />} />
                   <Route path="profile" element={<ProfilePage />} />
                 </Route>

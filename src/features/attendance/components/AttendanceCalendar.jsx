@@ -1,64 +1,66 @@
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, X, Plus, Users, Clock } from "lucide-react";
+import { useState, useRef } from "react";
+import { ChevronLeft, ChevronRight, X, Plus, Users, Check } from "lucide-react";
 import { Button } from "../../../components/ui/button";
+import { users } from "../../../mock/userData";
 
 // 목 이벤트 데이터
 const mockCalendarEvents = [
   {
     id: "1",
-    title: "팀 스프린트 회의",
-    date: "2025-12-10",
-    startTime: "10:00",
-    endTime: "11:00",
-    participants: ["김철수", "이영희", "박민수"],
+    title: "위니버시티 스프린트",
+    date: "2025-12-15",
+    startTime: "14:00",
+    endTime: "16:00",
+    participants: ["ODzZq93x0R", "xBEYJgqZ8g", "rM0APGlw8l"],
     color: "blue",
   },
   {
     id: "2",
-    title: "프로젝트 리뷰",
-    date: "2025-12-12",
+    title: "해커톤 발표",
+    date: "2025-12-10",
     startTime: "14:00",
     endTime: "16:00",
-    participants: ["김철수", "박민수"],
+    participants: ["eB8qDjBaEK", "ODzZq93x0R", "xBEYJgqZ8g", "rM0APGlw8l", "rjzQAaqRz7"],
     color: "green",
   },
   {
     id: "3",
-    title: "워크숍",
-    date: "2025-12-15",
-    startTime: null,
-    endTime: null,
-    isAllDay: true,
-    participants: ["전체 팀"],
-    color: "purple",
-  },
-  {
-    id: "4",
-    title: "송년회",
-    date: "2025-12-20",
-    endDate: "2025-12-20",
-    startTime: "18:00",
-    endTime: "21:00",
-    participants: ["전체 팀"],
-    color: "orange",
-  },
-  {
-    id: "5",
-    title: "연말 휴가",
-    date: "2025-12-24",
-    endDate: "2025-12-31",
+    title: "크리스마스",
+    date: "2025-12-25",
+    endDate: "2025-12-25",
     isAllDay: true,
     participants: [],
     color: "red",
   },
+  {
+    id: "4",
+    title: "연말 회식",
+    date: "2025-12-27",
+    startTime: "18:00",
+    endTime: "21:00",
+    participants: ["eB8qDjBaEK", "ODzZq93x0R"],
+    color: "purple",
+  },
 ];
+
+// 현재 사용자 ID (로그인 사용자 mock)
+const CURRENT_USER_ID = "ODzZq93x0R";
 
 export function AttendanceCalendar({ records, onDateSelect }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [events, setEvents] = useState(mockCalendarEvents);
-  const [showEventModal, setShowEventModal] = useState(false);
+  const [showEventForm, setShowEventForm] = useState(false);
   const [selectedDateForEvent, setSelectedDateForEvent] = useState(null);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0, side: 'right' });
+
+  // 드래그 선택 관련 상태
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState(null);
+  const [dragEnd, setDragEnd] = useState(null);
+  const calendarRef = useRef(null);
+  const containerRef = useRef(null);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -80,7 +82,9 @@ export function AttendanceCalendar({ records, onDateSelect }) {
   };
 
   const getRecordForDate = (date) => {
-    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(date).padStart(2, "0")}`;
+    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(
+      date
+    ).padStart(2, "0")}`;
     return records.find((r) => r.date === dateStr);
   };
 
@@ -112,9 +116,7 @@ export function AttendanceCalendar({ records, onDateSelect }) {
     const record = getRecordForDate(date);
     if (!record) return null;
 
-    const hasVacation = record.sessions?.some(
-      (s) => s.location === "VACATION"
-    );
+    const hasVacation = record.sessions?.some((s) => s.location === "VACATION");
     if (hasVacation) return "vacation";
 
     return "work";
@@ -123,7 +125,9 @@ export function AttendanceCalendar({ records, onDateSelect }) {
   // 특정 날짜의 이벤트 가져오기
   const getEventsForDate = (date) => {
     if (!date) return [];
-    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(date).padStart(2, "0")}`;
+    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(
+      date
+    ).padStart(2, "0")}`;
     return events.filter((event) => {
       const startDate = event.date;
       const endDate = event.endDate || event.date;
@@ -132,165 +136,340 @@ export function AttendanceCalendar({ records, onDateSelect }) {
   };
 
   // 이벤트 색상 클래스
-  const getEventColorClass = (color) => {
+  const getEventColorClass = (color, isParticipating) => {
     const colorMap = {
-      blue: "bg-blue-100 text-blue-700",
-      green: "bg-green-100 text-green-700",
-      purple: "bg-purple-100 text-purple-700",
-      orange: "bg-orange-100 text-orange-700",
-      red: "bg-red-100 text-red-700",
+      blue: isParticipating
+        ? "bg-blue-100 text-blue-700 border-2 border-blue-500"
+        : "bg-blue-50 text-blue-600",
+      green: isParticipating
+        ? "bg-green-100 text-green-700 border-2 border-green-500"
+        : "bg-green-50 text-green-600",
+      purple: isParticipating
+        ? "bg-purple-100 text-purple-700 border-2 border-purple-500"
+        : "bg-purple-50 text-purple-600",
+      orange: isParticipating
+        ? "bg-orange-100 text-orange-700 border-2 border-orange-500"
+        : "bg-orange-50 text-orange-600",
+      red: isParticipating
+        ? "bg-red-100 text-red-700 border-2 border-red-500"
+        : "bg-red-50 text-red-600",
     };
-    return colorMap[color] || "bg-gray-100 text-gray-700";
+    return colorMap[color] || (isParticipating ? "bg-gray-100 text-gray-700 border-2 border-gray-500" : "bg-gray-50 text-gray-600");
   };
 
-  // 날짜 클릭 핸들러
-  const handleDateClick = (date, record) => {
+  // 현재 사용자가 참여하는지 확인
+  const isUserParticipating = (event) => {
+    return event.participants?.includes(CURRENT_USER_ID);
+  };
+
+  // 날짜 문자열 생성
+  const getDateString = (date) => {
+    return `${year}-${String(month + 1).padStart(2, "0")}-${String(date).padStart(2, "0")}`;
+  };
+
+  // 드래그 시작
+  const handleMouseDown = (date) => {
+    if (!date) return;
+    setIsDragging(true);
+    setDragStart(date);
+    setDragEnd(date);
+  };
+
+  // 드래그 중
+  const handleMouseEnter = (date) => {
+    if (!isDragging || !date) return;
+    setDragEnd(date);
+  };
+
+  // 드래그 끝
+  const handleMouseUp = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+
+    if (dragStart && dragEnd) {
+      const start = Math.min(dragStart, dragEnd);
+      const end = Math.max(dragStart, dragEnd);
+
+      setSelectedDateForEvent({
+        start: getDateString(start),
+        end: getDateString(end),
+        isRange: start !== end,
+      });
+      setShowEventForm(true);
+      setEditingEvent(null);
+    }
+
+    setDragStart(null);
+    setDragEnd(null);
+  };
+
+  // 드래그 선택 범위 확인
+  const isInDragRange = (date) => {
+    if (!isDragging || !dragStart || !dragEnd || !date) return false;
+    const start = Math.min(dragStart, dragEnd);
+    const end = Math.max(dragStart, dragEnd);
+    return date >= start && date <= end;
+  };
+
+  // 팝오버 위치 계산
+  const calculatePopoverPosition = (element) => {
+    if (!element || !containerRef.current) return { top: 0, left: 0, side: 'right' };
+
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const cellRect = element.getBoundingClientRect();
+    const popoverWidth = 320;
+
+    // 셀의 중앙 위치 기준
+    const cellCenterX = cellRect.left + cellRect.width / 2;
+    const containerCenterX = containerRect.left + containerRect.width / 2;
+
+    // 왼쪽인지 오른쪽인지 판단
+    const side = cellCenterX < containerCenterX ? 'right' : 'left';
+
+    // top은 셀의 상단 기준
+    const top = cellRect.top - containerRect.top;
+
+    // left 계산
+    let left;
+    if (side === 'right') {
+      left = cellRect.right - containerRect.left + 12; // 셀 오른쪽에 위치
+    } else {
+      left = cellRect.left - containerRect.left - popoverWidth - 12; // 셀 왼쪽에 위치
+    }
+
+    return { top, left, side };
+  };
+
+  // 날짜 클릭 핸들러 (단일 클릭)
+  const handleDateClick = (date, record, event) => {
     if (!date) return;
     setSelectedDate(date);
     onDateSelect?.(date, record);
 
-    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(date).padStart(2, "0")}`;
-    setSelectedDateForEvent(dateStr);
-    setShowEventModal(true);
+    const dateStr = getDateString(date);
+    setSelectedDateForEvent({
+      start: dateStr,
+      end: dateStr,
+      isRange: false,
+    });
+
+    // 클릭한 셀의 위치 계산
+    const cellElement = event.currentTarget;
+    const position = calculatePopoverPosition(cellElement);
+    setPopoverPosition(position);
+
+    setShowEventForm(true);
+    setEditingEvent(null);
   };
 
-  // 이벤트 추가 핸들러
-  const handleAddEvent = (eventData) => {
-    const newEvent = {
-      id: Date.now().toString(),
-      ...eventData,
-    };
-    setEvents([...events, newEvent]);
-    setShowEventModal(false);
+  // 이벤트 클릭 (수정)
+  const handleEventClick = (e, event) => {
+    e.stopPropagation();
+    setEditingEvent(event);
+    setSelectedDateForEvent({
+      start: event.date,
+      end: event.endDate || event.date,
+      isRange: event.endDate && event.endDate !== event.date,
+    });
+
+    // 클릭한 이벤트의 부모 셀 위치 계산
+    const cellElement = e.currentTarget.closest('[data-calendar-cell]');
+    if (cellElement) {
+      const position = calculatePopoverPosition(cellElement);
+      setPopoverPosition(position);
+    }
+
+    setShowEventForm(true);
+  };
+
+  // 이벤트 추가/수정 핸들러
+  const handleSaveEvent = (eventData) => {
+    if (editingEvent) {
+      // 수정
+      setEvents(events.map(e => e.id === editingEvent.id ? { ...e, ...eventData } : e));
+    } else {
+      // 추가
+      const newEvent = {
+        id: Date.now().toString(),
+        ...eventData,
+      };
+      setEvents([...events, newEvent]);
+    }
+    setShowEventForm(false);
+    setEditingEvent(null);
+  };
+
+  // 이벤트 삭제
+  const handleDeleteEvent = (eventId) => {
+    setEvents(events.filter(e => e.id !== eventId));
+    setShowEventForm(false);
+    setEditingEvent(null);
+  };
+
+  // 폼 닫기
+  const handleCloseForm = () => {
+    setShowEventForm(false);
+    setEditingEvent(null);
+    setSelectedDateForEvent(null);
   };
 
   return (
-    <div className="bg-[var(--background)] rounded-lg border border-[var(--grayLv2)] p-4">
-      {/* Header */}
-      <div className="flex items-center justify-center mb-4">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={handlePrevMonth}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-16 text-semibold">
-            {year}년 {month + 1}월
-          </span>
-          <Button variant="ghost" size="icon" onClick={handleNextMonth}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Weekday Headers */}
-      <div className="grid grid-cols-7 gap-1 mb-2">
-        {weekdays.map((day, idx) => (
-          <div
-            key={day}
-            className={`text-center text-12 py-1 ${
-              idx === 0
-                ? "text-[var(--error)]"
-                : idx === 6
-                  ? "text-[var(--primary)]"
-                  : "text-[var(--grayLv3)]"
-            }`}
-          >
-            {day}
+    <div ref={containerRef} className="bg-[var(--background)] rounded-lg border border-[var(--grayLv2)] relative">
+      <div className="p-4">
+          {/* Header */}
+          <div className="flex items-center justify-center mb-4">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" onClick={handlePrevMonth}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-16 text-semibold">
+                {year}년 {month + 1}월
+              </span>
+              <Button variant="ghost" size="icon" onClick={handleNextMonth}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        ))}
-      </div>
 
-      {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-1">
-        {days.map((date, idx) => {
-          const status = getDateStatus(date);
-          const record = date ? getRecordForDate(date) : null;
-          const dateEvents = getEventsForDate(date);
-          const isSelected = selectedDate === date;
+          {/* Weekday Headers */}
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {weekdays.map((day, idx) => (
+              <div
+                key={day}
+                className={`text-center text-12 py-1 ${
+                  idx === 0
+                    ? "text-[var(--error)]"
+                    : idx === 6
+                    ? "text-[var(--primary)]"
+                    : "text-[var(--grayLv3)]"
+                }`}
+              >
+                {day}
+              </div>
+            ))}
+          </div>
 
-          return (
-            <button
-              key={idx}
-              onClick={() => handleDateClick(date, record)}
-              disabled={!date}
-              className={`
-                h-20 p-1.5 rounded-lg relative transition-colors flex flex-col items-start overflow-hidden
-                ${!date ? "invisible" : ""}
-                ${isSelected ? "ring-1 ring-[var(--primary)]/40 bg-[var(--primary)]/10" : ""}
-                ${!isSelected && isToday(date) ? "ring-1 ring-[var(--primary)]/30 bg-[var(--primary)]/5" : ""}
-                ${date && !isSelected ? "hover:bg-[var(--grayLv1)] cursor-pointer" : ""}
-                ${date && isSelected ? "cursor-pointer" : ""}
-              `}
-            >
-              {date && (
-                <>
-                  <span
-                    className={`text-12 font-medium ${
-                      isSelected
-                        ? "text-[var(--primary)]"
-                        : idx % 7 === 0
-                          ? "text-[var(--error)]"
-                          : idx % 7 === 6
+          {/* Calendar Grid */}
+          <div
+            ref={calendarRef}
+            className="grid grid-cols-7 gap-1 select-none"
+            onMouseLeave={() => {
+              if (isDragging) {
+                handleMouseUp();
+              }
+            }}
+          >
+            {days.map((date, idx) => {
+              const status = getDateStatus(date);
+              const record = date ? getRecordForDate(date) : null;
+              const dateEvents = getEventsForDate(date);
+              const isSelected = selectedDate === date;
+              const inDragRange = isInDragRange(date);
+
+              return (
+                <div
+                  key={idx}
+                  data-calendar-cell
+                  onMouseDown={() => handleMouseDown(date)}
+                  onMouseEnter={() => handleMouseEnter(date)}
+                  onMouseUp={handleMouseUp}
+                  onClick={(e) => !isDragging && handleDateClick(date, record, e)}
+                  className={`
+                    h-24 p-1.5 rounded-lg relative transition-colors flex flex-col items-start overflow-hidden
+                    ${!date ? "invisible" : ""}
+                    ${inDragRange ? "bg-[var(--primary)]/20 ring-1 ring-[var(--primary)]" : ""}
+                    ${isSelected && !inDragRange ? "ring-1 ring-[var(--primary)]/40 bg-[var(--primary)]/10" : ""}
+                    ${!isSelected && !inDragRange && isToday(date) ? "ring-1 ring-[var(--primary)]/30 bg-[var(--primary)]/5" : ""}
+                    ${date && !isSelected && !inDragRange ? "hover:bg-[var(--grayLv1)] cursor-pointer" : ""}
+                    ${date ? "cursor-pointer" : ""}
+                  `}
+                >
+                  {date && (
+                    <>
+                      <span
+                        className={`text-12 font-medium ${
+                          isSelected || inDragRange
+                            ? "text-[var(--primary)]"
+                            : idx % 7 === 0
+                            ? "text-[var(--error)]"
+                            : idx % 7 === 6
                             ? "text-[var(--primary)]"
                             : "text-slate-700"
-                    }`}
-                  >
-                    {date}
-                  </span>
-                  {/* 이벤트 표시 */}
-                  <div className="w-full mt-0.5 space-y-0.5">
-                    {dateEvents.slice(0, 2).map((event) => (
-                      <div
-                        key={event.id}
-                        className={`text-[9px] px-1 py-0.5 rounded truncate ${getEventColorClass(event.color)}`}
+                        }`}
                       >
-                        {event.title}
+                        {date}
+                      </span>
+                      {/* 이벤트 표시 */}
+                      <div className="w-full mt-0.5 space-y-0.5 flex-1 overflow-hidden">
+                        {dateEvents.slice(0, 2).map((event) => {
+                          const isParticipating = isUserParticipating(event);
+                          return (
+                            <div
+                              key={event.id}
+                              onClick={(e) => handleEventClick(e, event)}
+                              className={`text-[10px] px-1 py-0.5 rounded truncate flex items-center justify-between gap-1 ${getEventColorClass(
+                                event.color,
+                                isParticipating
+                              )}`}
+                            >
+                              <span className="truncate text-left flex-1">{event.title}</span>
+                              {event.startTime && (
+                                <span className="text-[9px] opacity-75 shrink-0">{event.startTime}</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {dateEvents.length > 2 && (
+                          <div className="text-[9px] text-slate-400 px-1">
+                            +{dateEvents.length - 2}개 더
+                          </div>
+                        )}
                       </div>
-                    ))}
-                    {dateEvents.length > 2 && (
-                      <div className="text-[9px] text-slate-400 px-1">
-                        +{dateEvents.length - 2}개 더
-                      </div>
-                    )}
-                  </div>
-                  {status === "vacation" && !dateEvents.length && (
-                    <span className="absolute bottom-1 right-1.5 text-blue-300 text-sm font-bold">
-                      *
-                    </span>
+                      {status === "vacation" && !dateEvents.length && (
+                        <span className="absolute bottom-1 right-1.5 text-blue-300 text-sm font-bold">
+                          *
+                        </span>
+                      )}
+                    </>
                   )}
-                </>
-              )}
-            </button>
-          );
-        })}
+                </div>
+              );
+            })}
+          </div>
       </div>
 
-      {/* 이벤트 추가 모달 */}
-      {showEventModal && (
-        <EventModal
-          date={selectedDateForEvent}
-          events={getEventsForDate(selectedDate)}
-          getEventColorClass={getEventColorClass}
-          onClose={() => setShowEventModal(false)}
-          onSubmit={handleAddEvent}
+      {/* 이벤트 팝오버 */}
+      {showEventForm && (
+        <EventPopover
+          key={editingEvent?.id || selectedDateForEvent?.start || 'new'}
+          dateInfo={selectedDateForEvent}
+          editingEvent={editingEvent}
+          position={popoverPosition}
+          onClose={handleCloseForm}
+          onSubmit={handleSaveEvent}
+          onDelete={handleDeleteEvent}
         />
       )}
     </div>
   );
 }
 
-// 이벤트 모달 컴포넌트
-function EventModal({ date, events, getEventColorClass, onClose, onSubmit }) {
-  const [title, setTitle] = useState("");
-  const [startDate, setStartDate] = useState(date);
-  const [endDate, setEndDate] = useState(date);
-  const [isRange, setIsRange] = useState(false);
-  const [hasTime, setHasTime] = useState(false);
-  const [startTime, setStartTime] = useState("09:00");
-  const [endTime, setEndTime] = useState("10:00");
-  const [participants, setParticipants] = useState("");
-  const [color, setColor] = useState("blue");
+// 이벤트 팝오버 컴포넌트 (말풍선 스타일)
+function EventPopover({ dateInfo, editingEvent, position, onClose, onSubmit, onDelete }) {
+  const [title, setTitle] = useState(editingEvent?.title || "");
+  const [startDate, setStartDate] = useState(editingEvent?.date || dateInfo?.start || "");
+  const [endDate, setEndDate] = useState(editingEvent?.endDate || dateInfo?.end || dateInfo?.start || "");
+  const [isRange, setIsRange] = useState(editingEvent ? (editingEvent.endDate && editingEvent.endDate !== editingEvent.date) : dateInfo?.isRange || false);
+  const [hasTime, setHasTime] = useState(editingEvent ? !!editingEvent.startTime : false);
+  const [startTime, setStartTime] = useState(editingEvent?.startTime || "09:00");
+  const [endTime, setEndTime] = useState(editingEvent?.endTime || "10:00");
+  const [selectedParticipants, setSelectedParticipants] = useState(editingEvent?.participants || []);
+  const [color, setColor] = useState(editingEvent?.color || "blue");
+  const [showParticipantDropdown, setShowParticipantDropdown] = useState(false);
+  const popoverRef = useRef(null);
 
   const formatDateKorean = (dateStr) => {
+    if (!dateStr) return "";
     const d = new Date(dateStr);
     return `${d.getMonth() + 1}월 ${d.getDate()}일`;
   };
@@ -306,12 +485,17 @@ function EventModal({ date, events, getEventColorClass, onClose, onSubmit }) {
       startTime: hasTime ? startTime : null,
       endTime: hasTime ? endTime : null,
       isAllDay: !hasTime,
-      participants: participants
-        .split(",")
-        .map((p) => p.trim())
-        .filter(Boolean),
+      participants: selectedParticipants,
       color,
     });
+  };
+
+  const toggleParticipant = (userId) => {
+    setSelectedParticipants(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
   };
 
   const colorOptions = [
@@ -322,87 +506,85 @@ function EventModal({ date, events, getEventColorClass, onClose, onSubmit }) {
     { value: "red", label: "빨강", bg: "bg-red-500" },
   ];
 
+  // 팝오버 위치 스타일 계산
+  const popoverStyle = {
+    position: 'absolute',
+    top: Math.max(0, position.top),
+    left: position.left,
+    zIndex: 50,
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl w-full max-w-md shadow-xl">
+    <>
+      {/* 배경 클릭 영역 */}
+      <div
+        className="fixed inset-0 z-40"
+        onClick={onClose}
+      />
+
+      {/* 팝오버 */}
+      <div
+        ref={popoverRef}
+        style={popoverStyle}
+        className="w-80 bg-white rounded-xl shadow-2xl border border-slate-200 z-50"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* 말풍선 화살표 */}
+        <div
+          className={`absolute top-6 w-3 h-3 bg-white border-slate-200 transform rotate-45 ${
+            position.side === 'right'
+              ? '-left-1.5 border-l border-b'
+              : '-right-1.5 border-r border-t'
+          }`}
+        />
+
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-slate-800">
-              {formatDateKorean(date)}
+            <h3 className="text-base font-semibold text-slate-800">
+              {editingEvent ? "일정 수정" : "새 일정"}
             </h3>
-            <p className="text-xs text-slate-400">이벤트 추가</p>
+            <p className="text-xs text-slate-500">
+              {formatDateKorean(startDate)}
+              {isRange && endDate !== startDate && ` ~ ${formatDateKorean(endDate)}`}
+            </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-lg"
+            className="p-1.5 hover:bg-slate-100 rounded-lg"
           >
-            <X size={20} className="text-slate-500" />
+            <X size={16} className="text-slate-500" />
           </button>
         </div>
 
-        {/* 기존 이벤트 목록 */}
-        {events.length > 0 && (
-          <div className="px-6 py-3 border-b border-slate-100">
-            <p className="text-xs text-slate-500 mb-2">이 날의 이벤트</p>
-            <div className="space-y-1.5">
-              {events.map((event) => (
-                <div
-                  key={event.id}
-                  className={`flex items-center justify-between p-2 rounded-lg ${getEventColorClass(event.color)}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{event.title}</span>
-                    {event.startTime && (
-                      <span className="text-xs opacity-75">
-                        {event.startTime} - {event.endTime}
-                      </span>
-                    )}
-                    {event.isAllDay && (
-                      <span className="text-xs opacity-75">종일</span>
-                    )}
-                  </div>
-                  {event.participants?.length > 0 && (
-                    <div className="flex items-center gap-1 text-xs opacity-75">
-                      <Users size={10} />
-                      {event.participants.length}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 새 이벤트 폼 */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        {/* 폼 */}
+        <form onSubmit={handleSubmit} className="p-4 space-y-3 max-h-[400px] overflow-y-auto">
           {/* 제목 */}
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">
-              항목 이름 <span className="text-red-500">*</span>
+            <label className="text-xs text-slate-600 mb-1 block">
+              일정 제목 <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="이벤트 이름을 입력하세요"
-              className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]"
+              placeholder="일정 이름을 입력하세요"
+              className="w-full h-9 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               required
+              autoFocus
             />
           </div>
 
           {/* 날짜 */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-xs text-slate-500">
-                날짜 <span className="text-red-500">*</span>
-              </label>
-              <label className="flex items-center gap-1.5 text-xs text-slate-500">
+              <label className="text-xs text-slate-600">날짜</label>
+              <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={isRange}
                   onChange={(e) => setIsRange(e.target.checked)}
-                  className="rounded"
+                  className="rounded w-3.5 h-3.5"
                 />
                 기간 설정
               </label>
@@ -412,7 +594,7 @@ function EventModal({ date, events, getEventColorClass, onClose, onSubmit }) {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]"
+                className="w-full h-9 rounded-lg border border-slate-200 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 required
               />
               {isRange && (
@@ -421,7 +603,7 @@ function EventModal({ date, events, getEventColorClass, onClose, onSubmit }) {
                   value={endDate}
                   min={startDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]"
+                  className="w-full h-9 rounded-lg border border-slate-200 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               )}
             </div>
@@ -430,73 +612,126 @@ function EventModal({ date, events, getEventColorClass, onClose, onSubmit }) {
           {/* 시간 */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-xs text-slate-500">시간</label>
-              <label className="flex items-center gap-1.5 text-xs text-slate-500">
+              <label className="text-xs text-slate-600">시간</label>
+              <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={hasTime}
                   onChange={(e) => setHasTime(e.target.checked)}
-                  className="rounded"
+                  className="rounded w-3.5 h-3.5"
                 />
                 시간 설정
               </label>
             </div>
-            {hasTime && (
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex items-center gap-2">
-                  <Clock size={14} className="text-slate-400" />
-                  <input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="flex-1 h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400 text-sm">~</span>
-                  <input
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    className="flex-1 h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]"
-                  />
-                </div>
+            {hasTime ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="flex-1 h-9 rounded-lg border border-slate-200 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+                <span className="text-slate-400 text-xs">~</span>
+                <input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="flex-1 h-9 rounded-lg border border-slate-200 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
               </div>
-            )}
-            {!hasTime && (
-              <p className="text-xs text-slate-400">종일 이벤트로 설정됩니다</p>
+            ) : (
+              <p className="text-xs text-slate-400">종일 일정으로 설정됩니다</p>
             )}
           </div>
 
           {/* 참가자 */}
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">
-              참가 인원 (쉼표로 구분)
-            </label>
+            <label className="text-xs text-slate-600 mb-1 block">참여자</label>
             <div className="relative">
-              <Users size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={participants}
-                onChange={(e) => setParticipants(e.target.value)}
-                placeholder="예: 김철수, 이영희"
-                className="w-full h-10 rounded-lg border border-slate-200 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]"
-              />
+              <button
+                type="button"
+                onClick={() => setShowParticipantDropdown(!showParticipantDropdown)}
+                className="w-full h-9 rounded-lg border border-slate-200 px-3 text-sm text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              >
+                <span className={selectedParticipants.length > 0 ? "text-slate-800" : "text-slate-400"}>
+                  {selectedParticipants.length > 0
+                    ? `${selectedParticipants.length}명 선택됨`
+                    : "팀원 선택"
+                  }
+                </span>
+                <Users size={14} className="text-slate-400" />
+              </button>
+
+              {showParticipantDropdown && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-10 max-h-32 overflow-y-auto">
+                  {users.map(user => (
+                    <button
+                      key={user.id}
+                      type="button"
+                      onClick={() => toggleParticipant(user.id)}
+                      className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${
+                        selectedParticipants.includes(user.id)
+                          ? "bg-blue-500 border-blue-500"
+                          : "border-slate-300"
+                      }`}>
+                        {selectedParticipants.includes(user.id) && (
+                          <Check size={8} className="text-white" />
+                        )}
+                      </div>
+                      {user.profileImage ? (
+                        <img src={user.profileImage} alt="" className="w-5 h-5 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[10px]">
+                          {user.displayName?.charAt(0)}
+                        </div>
+                      )}
+                      <span className="text-xs text-slate-700">{user.displayName}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+
+            {/* 선택된 참가자 표시 */}
+            {selectedParticipants.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1.5">
+                {selectedParticipants.map(userId => {
+                  const user = users.find(u => u.id === userId);
+                  if (!user) return null;
+                  return (
+                    <span
+                      key={userId}
+                      className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-slate-100 rounded-full text-[10px] text-slate-700"
+                    >
+                      {user.displayName}
+                      <button
+                        type="button"
+                        onClick={() => toggleParticipant(userId)}
+                        className="hover:text-red-500"
+                      >
+                        <X size={10} />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* 색상 */}
           <div>
-            <label className="text-xs text-slate-500 mb-2 block">색상</label>
+            <label className="text-xs text-slate-600 mb-1.5 block">색상</label>
             <div className="flex gap-2">
               {colorOptions.map((option) => (
                 <button
                   key={option.value}
                   type="button"
                   onClick={() => setColor(option.value)}
-                  className={`w-8 h-8 rounded-full ${option.bg} transition-transform ${
+                  className={`w-6 h-6 rounded-full ${option.bg} transition-transform ${
                     color === option.value
-                      ? "ring-2 ring-offset-2 ring-slate-400 scale-110"
+                      ? "ring-2 ring-offset-1 ring-slate-400 scale-110"
                       : "hover:scale-105"
                   }`}
                   title={option.label}
@@ -507,21 +742,31 @@ function EventModal({ date, events, getEventColorClass, onClose, onSubmit }) {
 
           {/* 버튼 */}
           <div className="flex gap-2 pt-2">
-            <Button
+            {editingEvent && (
+              <button
+                type="button"
+                className="px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded-lg"
+                onClick={() => onDelete(editingEvent.id)}
+              >
+                삭제
+              </button>
+            )}
+            <button
               type="button"
-              variant="outline"
-              className="flex-1"
+              className="flex-1 px-3 py-1.5 text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg"
               onClick={onClose}
             >
               취소
-            </Button>
-            <Button type="submit" className="flex-1 gap-1">
-              <Plus size={16} />
-              추가
-            </Button>
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-3 py-1.5 text-xs text-white bg-blue-500 hover:bg-blue-600 rounded-lg flex items-center justify-center gap-1"
+            >
+              {editingEvent ? "수정하기" : <><Plus size={14} /> 추가하기</>}
+            </button>
           </div>
         </form>
       </div>
-    </div>
+    </>
   );
 }

@@ -15,7 +15,7 @@ import { Header } from "./Header";
 import { useAppStore, useUIStore } from "../../stores";
 
 const pageTitles = {
-  "/attendance": "출근 기록",
+  "/attendance": "근무 기록",
   "/tasks": "업무 일지",
   "/projects": "프로젝트",
   "/team": "팀 현황",

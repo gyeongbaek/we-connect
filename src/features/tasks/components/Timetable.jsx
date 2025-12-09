@@ -503,8 +503,8 @@ export function Timetable({
           const canResize = !isVacation && !isBreak;
           const canDelete = !isVacation && !isBreak;
 
-          // 시스템 블록(휴게/휴가)은 상단에 표시
-          const zIndex = isBreak ? 100 : isVacation ? 10 : 1;
+          // 시스템 블록(휴게/휴가)은 타임테이블 내에서 상단에 표시 (사이드바 z-50보다 낮게)
+          const zIndex = isBreak ? 20 : isVacation ? 10 : 1;
           // 휴게/일반: 반투명, 휴가: 불투명
           const bgColor = isVacation
             ? blockColor

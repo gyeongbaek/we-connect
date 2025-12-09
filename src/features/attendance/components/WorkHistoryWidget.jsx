@@ -69,14 +69,20 @@ export const WorkHistoryWidget = () => {
     const today = new Date();
     const year = currentMonday.getFullYear();
     const startOfMonth = new Date(year, month, 1);
-    const endDate = today.getMonth() === month && today.getFullYear() === year
-      ? today
-      : new Date(year, month + 1, 0); // 해당 월의 마지막 날
+    const endDate =
+      today.getMonth() === month && today.getFullYear() === year
+        ? today
+        : new Date(year, month + 1, 0); // 해당 월의 마지막 날
 
     let workingDays = 0;
-    for (let d = new Date(startOfMonth); d <= endDate; d.setDate(d.getDate() + 1)) {
+    for (
+      let d = new Date(startOfMonth);
+      d <= endDate;
+      d.setDate(d.getDate() + 1)
+    ) {
       const dayOfWeek = d.getDay();
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 주말 제외
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        // 주말 제외
         workingDays++;
       }
     }
@@ -89,9 +95,14 @@ export const WorkHistoryWidget = () => {
 
     Object.entries(registeredAttendance).forEach(([date, att]) => {
       const d = new Date(date);
-      if (d.getFullYear() === currentMonday.getFullYear() && d.getMonth() === month) {
-        const morningHours = att.morningLocation === "휴가" ? 0 : (att.lunchStart - att.startTime);
-        const afternoonHours = att.afternoonLocation === "휴가" ? 0 : (att.endTime - att.lunchEnd);
+      if (
+        d.getFullYear() === currentMonday.getFullYear() &&
+        d.getMonth() === month
+      ) {
+        const morningHours =
+          att.morningLocation === "휴가" ? 0 : att.lunchStart - att.startTime;
+        const afternoonHours =
+          att.afternoonLocation === "휴가" ? 0 : att.endTime - att.lunchEnd;
         totalHours += morningHours + afternoonHours;
       }
     });
@@ -109,7 +120,6 @@ export const WorkHistoryWidget = () => {
   };
 
   const stats = calculateMonthlyStats();
-
 
   const handlePrevWeek = () => {
     const newMonday = new Date(currentMonday);
@@ -184,9 +194,12 @@ export const WorkHistoryWidget = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div>
-                <span className="text-xs text-slate-500">{month + 1}월 근무</span>
+                <span className="text-xs text-slate-500">
+                  {month + 1}월 근무
+                </span>
                 <span className="text-sm font-medium text-slate-800 ml-2">
-                  {formatHours(stats.totalHours)} / {formatHours(stats.standardHours)}
+                  {formatHours(stats.totalHours)} /{" "}
+                  {formatHours(stats.standardHours)}
                 </span>
               </div>
               {stats.overtimeHours !== 0 && (
@@ -224,13 +237,18 @@ const WorkHistoryItem = ({ day, attendance, vacation }) => {
   const today = new Date().toISOString().split("T")[0];
   const isToday = day.date === today;
 
-  // 휴가 스토어에서 등록된 휴가 확인 (출근 기록이 없는 경우에도 표시)
-  const vacationMorning = vacation?.timeType === "MORNING" || vacation?.timeType === "FULL";
-  const vacationAfternoon = vacation?.timeType === "AFTERNOON" || vacation?.timeType === "FULL";
+  // 휴가 스토어에서 등록된 휴가 확인 (근무 기록이 없는 경우에도 표시)
+  const vacationMorning =
+    vacation?.timeType === "MORNING" || vacation?.timeType === "FULL";
+  const vacationAfternoon =
+    vacation?.timeType === "AFTERNOON" || vacation?.timeType === "FULL";
 
   // attendance가 있으면 attendance 기준, 없으면 vacation 기준
-  const isMorningVacation = attendance?.morningLocation === "휴가" || (!attendance && vacationMorning);
-  const isAfternoonVacation = attendance?.afternoonLocation === "휴가" || (!attendance && vacationAfternoon);
+  const isMorningVacation =
+    attendance?.morningLocation === "휴가" || (!attendance && vacationMorning);
+  const isAfternoonVacation =
+    attendance?.afternoonLocation === "휴가" ||
+    (!attendance && vacationAfternoon);
   const isFullVacation = isMorningVacation && isAfternoonVacation;
 
   const getTooltipContent = () => {
@@ -243,11 +261,17 @@ const WorkHistoryItem = ({ day, attendance, vacation }) => {
 
     const morning = isMorningVacation
       ? "오전 휴가"
-      : `오전 ${formatTime(attendance.startTime)}-${formatTime(attendance.lunchStart)}`;
-    const lunch = `휴게 ${formatTime(attendance.lunchStart)}-${formatTime(attendance.lunchEnd)}`;
+      : `오전 ${formatTime(attendance.startTime)}-${formatTime(
+          attendance.lunchStart
+        )}`;
+    const lunch = `휴게 ${formatTime(attendance.lunchStart)}-${formatTime(
+      attendance.lunchEnd
+    )}`;
     const afternoon = isAfternoonVacation
       ? "오후 휴가"
-      : `오후 ${formatTime(attendance.lunchEnd)}-${formatTime(attendance.endTime)}`;
+      : `오후 ${formatTime(attendance.lunchEnd)}-${formatTime(
+          attendance.endTime
+        )}`;
     return `${morning} | ${lunch} | ${afternoon}`;
   };
 
@@ -267,11 +291,11 @@ const WorkHistoryItem = ({ day, attendance, vacation }) => {
       {/* Tooltip */}
       {showTooltip && attendance && (
         <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-slate-800 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-10">
-          <div className="font-medium mb-1">{day.date} ({day.dayName})</div>
-          <div>{getTooltipContent()}</div>
-          <div className="mt-1 text-slate-300">
-            근무 {formatHours(hours)}
+          <div className="font-medium mb-1">
+            {day.date} ({day.dayName})
           </div>
+          <div>{getTooltipContent()}</div>
+          <div className="mt-1 text-slate-300">근무 {formatHours(hours)}</div>
           <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-800" />
         </div>
       )}
@@ -285,9 +309,7 @@ const WorkHistoryItem = ({ day, attendance, vacation }) => {
           {day.date.slice(5)}
         </div>
         <div
-          className={`text-xs ${
-            isToday ? "text-blue-500" : "text-slate-400"
-          }`}
+          className={`text-xs ${isToday ? "text-blue-500" : "text-slate-400"}`}
         >
           {day.dayName}
           {isToday && (
@@ -327,7 +349,8 @@ const WorkHistoryItem = ({ day, attendance, vacation }) => {
         {(attendance || isMorningVacation || isAfternoonVacation) && (
           <span
             className={`text-xs font-medium ${
-              isFullVacation || (!attendance && (isMorningVacation || isAfternoonVacation))
+              isFullVacation ||
+              (!attendance && (isMorningVacation || isAfternoonVacation))
                 ? "text-orange-600"
                 : hours > 8
                 ? "text-blue-600"
@@ -336,11 +359,14 @@ const WorkHistoryItem = ({ day, attendance, vacation }) => {
                 : "text-slate-700"
             }`}
           >
-            {isFullVacation ? "휴가" : !attendance && (isMorningVacation || isAfternoonVacation) ? "4h" : formatHours(hours)}
+            {isFullVacation
+              ? "휴가"
+              : !attendance && (isMorningVacation || isAfternoonVacation)
+              ? "4h"
+              : formatHours(hours)}
           </span>
         )}
       </div>
     </div>
   );
 };
-

@@ -6,6 +6,8 @@ import {
   Rocket,
   Video,
   Folder,
+  Settings,
+  Palette,
 } from "lucide-react";
 import { PROJECT_STATUS, PROJECT_TYPES, getProjectParticipants } from "../../../mock/projectData";
 
@@ -43,6 +45,8 @@ const TypeIcons = {
   LECTURE: BookOpen,
   DEVELOPMENT: Rocket,
   CONTENT: Video,
+  OPERATION: Settings,
+  DESIGN: Palette,
   OTHER: Folder,
 };
 
@@ -83,9 +87,28 @@ export function ProjectCard({ project, onClick, onMenuClick }) {
       <h3 className="text-16 text-semibold mb-1 truncate">{project.name}</h3>
 
       {/* Description */}
-      <p className="text-14 text-[var(--grayLv3)] line-clamp-2 mb-4 flex-1">
+      <p className="text-14 text-[var(--grayLv3)] line-clamp-2 mb-3 flex-1">
         {project.description}
       </p>
+
+      {/* Progress Bar */}
+      {project.progress !== undefined && (
+        <div className="mb-3">
+          <div className="flex justify-between text-12 mb-1">
+            <span className="text-[var(--grayLv3)]">진행률</span>
+            <span className="text-medium">{project.progress}%</span>
+          </div>
+          <div className="h-1.5 bg-[var(--grayLv1)] rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${project.progress}%`,
+                backgroundColor: type.color
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Participants */}
       <div className="flex items-center gap-2 mb-3">

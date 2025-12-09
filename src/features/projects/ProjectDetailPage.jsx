@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -11,6 +12,10 @@ import {
   Rocket,
   Video,
   Folder,
+  Settings,
+  Palette,
+  Check,
+  Plus,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import {
@@ -54,17 +59,48 @@ const TypeIcons = {
   LECTURE: BookOpen,
   DEVELOPMENT: Rocket,
   CONTENT: Video,
+  OPERATION: Settings,
+  DESIGN: Palette,
   OTHER: Folder,
 };
 
 export function ProjectDetailPage() {
   const navigate = useNavigate();
   const { projectId } = useParams();
+  const [activeTab, setActiveTab] = useState("overview");
 
   // localStorage와 mockData 모두 확인
   const storedProjects = JSON.parse(localStorage.getItem("projects") || "[]");
   const allProjects = [...storedProjects, ...mockProjectsData];
   const project = allProjects.find((p) => p.id === projectId);
+
+  // 체크리스트 상태 관리 (localStorage 사용)
+  const [checklists, setChecklists] = useState(() => {
+    const savedChecklists = localStorage.getItem(`project_${projectId}_checklists`);
+    if (savedChecklists) {
+      return JSON.parse(savedChecklists);
+    }
+    return project?.checklists || [];
+  });
+
+  // 메모 상태 관리 (localStorage 사용)
+  const [memos, setMemos] = useState(() => {
+    const savedMemos = localStorage.getItem(`project_${projectId}_memos`);
+    if (savedMemos) {
+      return JSON.parse(savedMemos);
+    }
+    return project?.memos || [];
+  });
+
+  const toggleChecklist = (id) => {
+    const updated = checklists.map((item) =>
+      item.id === id ? { ...item, done: !item.done } : item
+    );
+    setChecklists(updated);
+    localStorage.setItem(`project_${projectId}_checklists`, JSON.stringify(updated));
+  };
+
+  const completedCount = checklists.filter((c) => c.done).length;
 
   const handleBack = () => {
     navigate("/projects");
@@ -195,97 +231,232 @@ export function ProjectDetailPage() {
           </div>
         </div>
 
-        {/* Description */}
-        <div className="p-6 border-b border-[var(--grayLv2)]">
-          <h2 className="text-14 text-medium text-[var(--grayLv3)] mb-2">설명</h2>
-          <p className="text-16 leading-relaxed">
-            {project.description || "설명이 없습니다."}
-          </p>
+        {/* Tabs */}
+        <div className="flex gap-1 px-6 border-b border-[var(--grayLv2)]">
+          {[
+            { id: "overview", label: "개요" },
+            { id: "checklist", label: "체크리스트" },
+            { id: "memos", label: "메모" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-3 text-14 text-medium border-b-2 -mb-px transition-colors ${
+                activeTab === tab.id
+                  ? "border-[var(--primary)] text-[var(--primary)]"
+                  : "border-transparent text-[var(--grayLv3)] hover:text-[var(--grayLv4)]"
+              }`}
+            >
+              {tab.label}
+              {tab.id === "checklist" && checklists.length > 0 && (
+                <span className="ml-1.5 text-12 text-[var(--grayLv3)]">
+                  ({completedCount}/{checklists.length})
+                </span>
+              )}
+              {tab.id === "memos" && memos.length > 0 && (
+                <span className="ml-1.5 text-12 text-[var(--grayLv3)]">
+                  ({memos.length})
+                </span>
+              )}
+            </button>
+          ))}
         </div>
 
-        {/* Links */}
-        <div className="p-6 border-b border-[var(--grayLv2)]">
-          <h2 className="text-14 text-medium text-[var(--grayLv3)] mb-3">링크</h2>
-          <div className="flex flex-wrap gap-3">
-            {project.discordLink ? (
-              <a
-                href={project.discordLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--grayLv1)] hover:bg-[var(--grayLv2)] transition-colors"
-              >
-                <DiscordIcon className="w-5 h-5" />
-                <span className="text-14">Discord</span>
-                <ExternalLink className="w-3.5 h-3.5 text-[var(--grayLv3)]" />
-              </a>
-            ) : (
-              <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--grayLv1)] text-[var(--grayLv3)]">
-                <DiscordIcon className="w-5 h-5" />
-                <span className="text-14">Discord 링크 없음</span>
+        {/* Tab Content */}
+        {activeTab === "overview" && (
+          <>
+            {/* Progress Bar */}
+            {project.progress !== undefined && (
+              <div className="p-6 border-b border-[var(--grayLv2)]">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-14 text-medium text-[var(--grayLv3)]">진행률</h2>
+                  <span className="text-14 text-medium">{project.progress}%</span>
+                </div>
+                <div className="h-2 bg-[var(--grayLv1)] rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${project.progress}%`,
+                      backgroundColor: type.color
+                    }}
+                  />
+                </div>
               </div>
             )}
-            {project.notionLink ? (
-              <a
-                href={project.notionLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--grayLv1)] hover:bg-[var(--grayLv2)] transition-colors"
-              >
-                <NotionIcon className="w-5 h-5" />
-                <span className="text-14">Notion</span>
-                <ExternalLink className="w-3.5 h-3.5 text-[var(--grayLv3)]" />
-              </a>
+
+            {/* Description */}
+            <div className="p-6 border-b border-[var(--grayLv2)]">
+              <h2 className="text-14 text-medium text-[var(--grayLv3)] mb-2">설명</h2>
+              <p className="text-16 leading-relaxed">
+                {project.description || "설명이 없습니다."}
+              </p>
+            </div>
+
+            {/* Links */}
+            <div className="p-6 border-b border-[var(--grayLv2)]">
+              <h2 className="text-14 text-medium text-[var(--grayLv3)] mb-3">링크</h2>
+              <div className="flex flex-wrap gap-3">
+                {project.discordLink ? (
+                  <a
+                    href={project.discordLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--grayLv1)] hover:bg-[var(--grayLv2)] transition-colors"
+                  >
+                    <DiscordIcon className="w-5 h-5" />
+                    <span className="text-14">Discord</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-[var(--grayLv3)]" />
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--grayLv1)] text-[var(--grayLv3)]">
+                    <DiscordIcon className="w-5 h-5" />
+                    <span className="text-14">Discord 링크 없음</span>
+                  </div>
+                )}
+                {project.notionLink ? (
+                  <a
+                    href={project.notionLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--grayLv1)] hover:bg-[var(--grayLv2)] transition-colors"
+                  >
+                    <NotionIcon className="w-5 h-5" />
+                    <span className="text-14">Notion</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-[var(--grayLv3)]" />
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--grayLv1)] text-[var(--grayLv3)]">
+                    <NotionIcon className="w-5 h-5" />
+                    <span className="text-14">Notion 링크 없음</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Participants */}
+            <div className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Users className="w-4 h-4 text-[var(--grayLv3)]" />
+                <h2 className="text-14 text-medium text-[var(--grayLv3)]">
+                  참가자 ({participants.length}명)
+                </h2>
+              </div>
+
+              {participants.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {participants.map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex items-center gap-3 p-3 rounded-lg bg-[var(--grayLv1)]"
+                    >
+                      {user.profileImage ? (
+                        <img
+                          src={user.profileImage}
+                          alt={user.displayName}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-[var(--grayLv2)] flex items-center justify-center text-14 text-semibold">
+                          {user.displayName?.charAt(0)}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-14 text-medium truncate">
+                          {user.displayName}
+                        </div>
+                        <div className="text-12 text-[var(--grayLv3)] truncate">
+                          {user.role || user.rank}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-14 text-[var(--grayLv3)]">참가자가 없습니다.</p>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Checklist Tab */}
+        {activeTab === "checklist" && (
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <h2 className="text-14 text-medium text-[var(--grayLv3)]">체크리스트</h2>
+                {checklists.length > 0 && (
+                  <span className="text-12 text-[var(--grayLv3)]">
+                    {completedCount}/{checklists.length} 완료
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {checklists.length > 0 ? (
+              <div className="space-y-2">
+                {checklists.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-[var(--grayLv1)] hover:bg-[var(--grayLv2)] transition-colors cursor-pointer"
+                    onClick={() => toggleChecklist(item.id)}
+                  >
+                    <button
+                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                        item.done
+                          ? "bg-[var(--primary)] border-[var(--primary)]"
+                          : "border-[var(--grayLv3)]"
+                      }`}
+                    >
+                      {item.done && <Check className="w-3 h-3 text-white" />}
+                    </button>
+                    <span
+                      className={`text-14 flex-1 ${
+                        item.done ? "text-[var(--grayLv3)] line-through" : ""
+                      }`}
+                    >
+                      {item.title}
+                    </span>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--grayLv1)] text-[var(--grayLv3)]">
-                <NotionIcon className="w-5 h-5" />
-                <span className="text-14">Notion 링크 없음</span>
+              <div className="text-center py-8 text-14 text-[var(--grayLv3)]">
+                등록된 체크리스트가 없습니다.
               </div>
             )}
           </div>
-        </div>
+        )}
 
-        {/* Participants */}
-        <div className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Users className="w-4 h-4 text-[var(--grayLv3)]" />
-            <h2 className="text-14 text-medium text-[var(--grayLv3)]">
-              참가자 ({participants.length}명)
-            </h2>
-          </div>
+        {/* Memos Tab */}
+        {activeTab === "memos" && (
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-14 text-medium text-[var(--grayLv3)]">메모</h2>
+            </div>
 
-          {participants.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {participants.map((user) => (
-                <div
-                  key={user.id}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-[var(--grayLv1)]"
-                >
-                  {user.profileImage ? (
-                    <img
-                      src={user.profileImage}
-                      alt={user.displayName}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-[var(--grayLv2)] flex items-center justify-center text-14 text-semibold">
-                      {user.displayName?.charAt(0)}
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <div className="text-14 text-medium truncate">
-                      {user.displayName}
-                    </div>
-                    <div className="text-12 text-[var(--grayLv3)] truncate">
-                      {user.role || user.rank}
+            {memos.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {memos.map((memo) => (
+                  <div
+                    key={memo.id}
+                    className="p-4 rounded-lg bg-[var(--grayLv1)] border border-[var(--grayLv2)]"
+                  >
+                    <h3 className="text-14 text-medium mb-2">{memo.title}</h3>
+                    <p className="text-14 text-[var(--grayLv3)] mb-3">{memo.content}</p>
+                    <div className="flex items-center justify-between text-12 text-[var(--grayLv3)]">
+                      <span>{memo.author}</span>
+                      <span>{memo.date}</span>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-14 text-[var(--grayLv3)]">참가자가 없습니다.</p>
-          )}
-        </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-14 text-[var(--grayLv3)]">
+                등록된 메모가 없습니다.
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
