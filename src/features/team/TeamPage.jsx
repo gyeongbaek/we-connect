@@ -104,15 +104,39 @@ export function TeamPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Page Description */}
       <p className="text-sm text-slate-500">
         실시간 팀원 근무 현황과 오늘 일정을 확인합니다
       </p>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column - Team Status (통합된 근무자 영역) */}
+      {/* 모바일: 조직구성 > 오늘미팅 > 팀원현황 순서 */}
+      {/* 태블릿: 조직구성/오늘미팅 2열 > 팀원현황 */}
+      {/* 데스크톱: 팀원현황(2/3) | 미팅/조직구성(1/3) */}
+
+      {/* 오늘 미팅 / 조직구성 - 모바일 1,2번, 태블릿 2열, 데스크톱 오른쪽 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4 lg:hidden">
+        {/* 1. 조직구성 */}
+        <div className="order-1">
+          <QuickNoteList
+            notes={quickNotes}
+            onAddNote={() => setIsQuickNoteModalOpen(true)}
+            onJoinNote={handleJoinQuickNote}
+            onAddComment={handleAddComment}
+            onToggleCommentCheck={handleToggleCommentCheck}
+            onCloseNote={handleCloseNote}
+            currentUserId={currentUserId}
+          />
+        </div>
+        {/* 2. 오늘 미팅 */}
+        <div className="order-2">
+          <MeetingList meetings={meetings} onAddMeeting={handleAddMeeting} />
+        </div>
+      </div>
+
+      {/* Main Content - 데스크톱 레이아웃 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 팀원 현황 - 모바일 3번(마지막), 데스크톱 왼쪽(2/3) */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-lg border border-slate-200 p-5">
             {/* Status Summary Header */}
@@ -190,8 +214,8 @@ export function TeamPage() {
           </div>
         </div>
 
-        {/* Right Column - Meetings & Quick Notes */}
-        <div className="lg:col-span-1 space-y-6">
+        {/* 오른쪽 - 데스크톱에서만 표시 */}
+        <div className="hidden lg:block lg:col-span-1 space-y-6">
           <MeetingList meetings={meetings} onAddMeeting={handleAddMeeting} />
           <QuickNoteList
             notes={quickNotes}

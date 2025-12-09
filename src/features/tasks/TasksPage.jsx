@@ -116,11 +116,27 @@ export function TasksPage() {
         </Button>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content - 모바일: 포모도로 > 체크리스트 > 타임테이블 순서 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Left - Pomodoro & Timetable */}
-        <div className="flex flex-col">
+        {/* 1. 포모도로 */}
+        <div className="order-1 lg:order-1">
           <PomodoroTimer />
+        </div>
+
+        {/* 2. 체크리스트 */}
+        <div className="order-2 lg:order-3 lg:row-span-2">
+          <Checklist
+            projectGroups={projectGroups}
+            shortTermTasks={shortTermTasks}
+            projects={projects}
+            onAddItem={addChecklistItem}
+            onToggleItem={toggleChecklistItem}
+            onUpdateItemStatus={updateChecklistStatus}
+          />
+        </div>
+
+        {/* 3. 타임테이블 */}
+        <div className="order-3 lg:order-2">
           <Timetable
             timeBlocks={timeBlocks}
             stats={stats}
@@ -133,16 +149,6 @@ export function TasksPage() {
             attendanceInfo={todayAttendance}
           />
         </div>
-
-        {/* Right - Checklist */}
-        <Checklist
-          projectGroups={projectGroups}
-          shortTermTasks={shortTermTasks}
-          projects={projects}
-          onAddItem={addChecklistItem}
-          onToggleItem={toggleChecklistItem}
-          onUpdateItemStatus={updateChecklistStatus}
-        />
       </div>
     </div>
   );

@@ -80,7 +80,7 @@ function QuickNoteCard({ note, onJoin, onAddComment, onToggleCommentCheck, onClo
         {isOwner && !isClosed && (
           <button
             onClick={() => onCloseNote?.(note.id)}
-            className="px-2 py-1 text-[10px] text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors font-medium"
+            className="px-2 py-1 text-[10px] bg-slate-700 text-white hover:bg-slate-800 rounded transition-colors font-medium"
           >
             마감
           </button>

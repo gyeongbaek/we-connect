@@ -107,6 +107,41 @@ export const calculateOvertimeHours = (
   return workHours - STANDARD_HOURS + vacationHours;
 };
 
+// 12월의 오늘 이전 날짜에 대한 기본 근무 기록 생성
+const generateDefaultDecemberAttendance = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth(); // 0-indexed (11 = 12월)
+  const today = now.getDate();
+
+  // 현재 12월인 경우에만 생성
+  if (month !== 11) return {};
+
+  const records = {};
+  for (let day = 1; day < today; day++) {
+    const date = new Date(year, month, day);
+    const dayOfWeek = date.getDay();
+
+    // 주말 제외 (0=일, 6=토)
+    if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+
+    const dateStr = date.toISOString().split("T")[0];
+    records[dateStr] = {
+      morningLocation: "재택",
+      afternoonLocation: "재택",
+      startTime: 9,
+      endTime: 18,
+      lunchStart: 12,
+      lunchEnd: 13,
+      morningVacationType: null,
+      afternoonVacationType: null,
+      registeredAt: new Date(year, month, day, 18, 0).toISOString(),
+    };
+  }
+
+  return records;
+};
+
 export function AttendanceProvider({ children }) {
   const today = new Date().toISOString().split("T")[0];
 
@@ -119,7 +154,7 @@ export function AttendanceProvider({ children }) {
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState(today);
   const [workSchedule, setWorkSchedule] = useState({});
-  const [registeredAttendance, setRegisteredAttendance] = useState({});
+  const [registeredAttendance, setRegisteredAttendance] = useState(generateDefaultDecemberAttendance());
   const [morningVacationType, setMorningVacationType] = useState(null);
   const [afternoonVacationType, setAfternoonVacationType] = useState(null);
 
@@ -200,6 +235,27 @@ export function AttendanceProvider({ children }) {
     afternoonVacationType,
   ]);
 
+  // 특정 날짜의 근무 기록 수정
+  const updateAttendance = useCallback((date, data) => {
+    setRegisteredAttendance((prev) => ({
+      ...prev,
+      [date]: {
+        ...prev[date],
+        ...data,
+        updatedAt: new Date().toISOString(),
+      },
+    }));
+  }, []);
+
+  // 특정 날짜의 근무 기록 삭제
+  const deleteAttendance = useCallback((date) => {
+    setRegisteredAttendance((prev) => {
+      const newState = { ...prev };
+      delete newState[date];
+      return newState;
+    });
+  }, []);
+
   const value = {
     morningLocation,
     afternoonLocation,
@@ -227,6 +283,8 @@ export function AttendanceProvider({ children }) {
     handleDateChange,
     handleChangeAll,
     registerAttendance,
+    updateAttendance,
+    deleteAttendance,
   };
 
   return (

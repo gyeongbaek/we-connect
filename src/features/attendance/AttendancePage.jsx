@@ -107,24 +107,32 @@ export function AttendancePage() {
         </p>
       </div>
 
-      {/* Main Content - 2:1 Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Calendar & Work History (2/3) */}
-        <div className="lg:col-span-2 space-y-4">
+      {/* Main Content - 모바일: 캘린더 > 출근하기 > 휴가현황 > 근무히스토리 순서 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+        {/* 1. 캘린더 */}
+        <div className="lg:col-span-2 order-1">
           <AttendanceCalendar
             records={records}
             onDateSelect={handleDateSelect}
           />
-          <WorkHistoryWidget />
         </div>
 
-        {/* Right Column - Check In & Vacation (1/3) */}
-        <div className="lg:col-span-1 space-y-4">
+        {/* 2. 출근하기 */}
+        <div className="order-2 lg:order-2">
           <CheckInPanel />
+        </div>
+
+        {/* 3. 휴가 현황 */}
+        <div className="order-3 lg:order-4">
           <VacationStatus
             balances={vacationBalances}
             onRequestVacation={handleVacationRequest}
           />
+        </div>
+
+        {/* 4. 근무 히스토리 */}
+        <div className="lg:col-span-2 order-4 lg:order-3">
+          <WorkHistoryWidget />
         </div>
       </div>
     </div>

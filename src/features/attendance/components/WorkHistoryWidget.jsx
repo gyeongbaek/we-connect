@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "./Card";
 import { TimeRangeBar, TimeScaleHeader } from "./TimeRangeBar";
 import { useAttendanceStore, useVacationStore } from "../../../stores";
 import { formatHours, formatTime } from "./TimeRangeSlider";
+import { cn } from "../../../utils/cn";
 
 // 해당 날짜가 속한 주의 월요일 구하기
 const getMonday = (date) => {
@@ -52,7 +53,8 @@ const getWeekDays = (monday) => {
 export const WorkHistoryWidget = () => {
   const navigate = useNavigate();
   const [currentMonday, setCurrentMonday] = useState(getMonday(new Date()));
-  const { registeredAttendance } = useAttendanceStore();
+  const [editingDate, setEditingDate] = useState(null);
+  const { registeredAttendance, updateAttendance } = useAttendanceStore();
   const { getVacationForDate } = useVacationStore();
 
   const weekDays = getWeekDays(currentMonday);
@@ -133,6 +135,13 @@ export const WorkHistoryWidget = () => {
     setCurrentMonday(newMonday);
   };
 
+  const handleSaveEdit = (data) => {
+    if (editingDate) {
+      updateAttendance(editingDate, data);
+      setEditingDate(null);
+    }
+  };
+
   return (
     <>
       <Card className="flex flex-col">
@@ -186,6 +195,7 @@ export const WorkHistoryWidget = () => {
               day={day}
               attendance={getAttendanceForDate(day.date)}
               vacation={getVacationForDate(day.date)}
+              onEdit={() => setEditingDate(day.date)}
             />
           ))}
         </div>
@@ -195,7 +205,7 @@ export const WorkHistoryWidget = () => {
             <div className="flex items-center gap-4">
               <div>
                 <span className="text-xs text-slate-500">
-                  {month + 1}월 근무
+                  {month + 1}월 근무 <span className="text-slate-400">(오늘 기준)</span>
                 </span>
                 <span className="text-sm font-medium text-slate-800 ml-2">
                   {formatHours(stats.totalHours)} /{" "}
@@ -205,11 +215,11 @@ export const WorkHistoryWidget = () => {
               {stats.overtimeHours !== 0 && (
                 <div>
                   <span className="text-xs text-slate-500">
-                    {stats.overtimeHours > 0 ? "초과 근무" : "부족"}
+                    {stats.overtimeHours > 0 ? "추가 근무" : "조기 퇴근"}
                   </span>
                   <span
                     className={`text-sm font-medium ml-2 ${
-                      stats.overtimeHours > 0 ? "text-blue-600" : "text-red-600"
+                      stats.overtimeHours > 0 ? "text-blue-600" : "text-amber-600"
                     }`}
                   >
                     {stats.overtimeHours > 0 ? "+" : ""}
@@ -227,13 +237,24 @@ export const WorkHistoryWidget = () => {
           </div>
         </div>
       </Card>
+
+      {/* 수정 모달 */}
+      {editingDate && (
+        <EditAttendanceModal
+          date={editingDate}
+          attendance={getAttendanceForDate(editingDate)}
+          onClose={() => setEditingDate(null)}
+          onSave={handleSaveEdit}
+        />
+      )}
     </>
   );
 };
 
 // 근무 내역 아이템 컴포넌트
-const WorkHistoryItem = ({ day, attendance, vacation }) => {
+const WorkHistoryItem = ({ day, attendance, vacation, onEdit }) => {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [showEditButton, setShowEditButton] = useState(false);
   const today = new Date().toISOString().split("T")[0];
   const isToday = day.date === today;
 
@@ -282,11 +303,13 @@ const WorkHistoryItem = ({ day, attendance, vacation }) => {
 
   return (
     <div
-      className={`px-4 py-2 flex items-center gap-3 hover:bg-slate-50 transition-colors relative ${
-        isToday ? "bg-blue-50 border-l-4 border-l-blue-500" : ""
-      }`}
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
+      className={cn(
+        "px-4 py-2 flex items-center gap-3 hover:bg-slate-50 transition-colors relative cursor-pointer group",
+        isToday && "bg-blue-50 border-l-4 border-l-blue-500"
+      )}
+      onMouseEnter={() => { setShowTooltip(true); setShowEditButton(true); }}
+      onMouseLeave={() => { setShowTooltip(false); setShowEditButton(false); }}
+      onClick={onEdit}
     >
       {/* Tooltip */}
       {showTooltip && attendance && (
@@ -345,7 +368,10 @@ const WorkHistoryItem = ({ day, attendance, vacation }) => {
         )}
       </div>
 
-      <div className="w-12 text-right shrink-0">
+      <div className="w-12 text-right shrink-0 flex items-center justify-end gap-1">
+        {showEditButton && (
+          <Pencil size={12} className="text-slate-400 group-hover:text-slate-600" />
+        )}
         {(attendance || isMorningVacation || isAfternoonVacation) && (
           <span
             className={`text-xs font-medium ${
@@ -366,6 +392,179 @@ const WorkHistoryItem = ({ day, attendance, vacation }) => {
               : formatHours(hours)}
           </span>
         )}
+      </div>
+    </div>
+  );
+};
+
+// 근무 수정 모달
+const EditAttendanceModal = ({ date, attendance, onClose, onSave }) => {
+  const [startTime, setStartTime] = useState(attendance?.startTime || 9);
+  const [endTime, setEndTime] = useState(attendance?.endTime || 18);
+  const [lunchStart, setLunchStart] = useState(attendance?.lunchStart || 12);
+  const [lunchEnd, setLunchEnd] = useState(attendance?.lunchEnd || 13);
+  const [morningLocation, setMorningLocation] = useState(attendance?.morningLocation || "재택");
+  const [afternoonLocation, setAfternoonLocation] = useState(attendance?.afternoonLocation || "재택");
+
+  const locations = ["재택", "사무실", "외근", "휴가"];
+
+  const formatDateKorean = (dateStr) => {
+    const d = new Date(dateStr);
+    const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
+    return `${d.getMonth() + 1}월 ${d.getDate()}일 (${dayNames[d.getDay()]})`;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave({
+      startTime,
+      endTime,
+      lunchStart,
+      lunchEnd,
+      morningLocation,
+      afternoonLocation,
+    });
+  };
+
+  const workHours =
+    (morningLocation === "휴가" ? 0 : lunchStart - startTime) +
+    (afternoonLocation === "휴가" ? 0 : endTime - lunchEnd);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative bg-white rounded-lg p-5 w-full max-w-sm mx-4 shadow-xl">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-slate-800">근무 기록 수정</h3>
+          <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded">
+            <X size={18} className="text-slate-500" />
+          </button>
+        </div>
+
+        <p className="text-sm text-slate-600 mb-4">{formatDateKorean(date)}</p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* 오전 근무 */}
+          <div>
+            <label className="text-xs text-slate-500 mb-1 block">오전 근무</label>
+            <div className="flex gap-2">
+              <select
+                value={morningLocation}
+                onChange={(e) => setMorningLocation(e.target.value)}
+                className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {locations.map((loc) => (
+                  <option key={loc} value={loc}>{loc}</option>
+                ))}
+              </select>
+              <input
+                type="number"
+                value={startTime}
+                onChange={(e) => setStartTime(Number(e.target.value))}
+                min={6}
+                max={12}
+                className="w-16 px-2 py-2 border border-slate-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-sm text-slate-400 self-center">~</span>
+              <input
+                type="number"
+                value={lunchStart}
+                onChange={(e) => setLunchStart(Number(e.target.value))}
+                min={11}
+                max={14}
+                className="w-16 px-2 py-2 border border-slate-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* 점심 시간 */}
+          <div>
+            <label className="text-xs text-slate-500 mb-1 block">점심 시간</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                value={lunchStart}
+                onChange={(e) => setLunchStart(Number(e.target.value))}
+                min={11}
+                max={14}
+                className="w-16 px-2 py-2 border border-slate-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-sm text-slate-400">~</span>
+              <input
+                type="number"
+                value={lunchEnd}
+                onChange={(e) => setLunchEnd(Number(e.target.value))}
+                min={12}
+                max={15}
+                className="w-16 px-2 py-2 border border-slate-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-xs text-slate-400">({lunchEnd - lunchStart}시간)</span>
+            </div>
+          </div>
+
+          {/* 오후 근무 */}
+          <div>
+            <label className="text-xs text-slate-500 mb-1 block">오후 근무</label>
+            <div className="flex gap-2">
+              <select
+                value={afternoonLocation}
+                onChange={(e) => setAfternoonLocation(e.target.value)}
+                className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {locations.map((loc) => (
+                  <option key={loc} value={loc}>{loc}</option>
+                ))}
+              </select>
+              <input
+                type="number"
+                value={lunchEnd}
+                onChange={(e) => setLunchEnd(Number(e.target.value))}
+                min={12}
+                max={15}
+                className="w-16 px-2 py-2 border border-slate-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-sm text-slate-400 self-center">~</span>
+              <input
+                type="number"
+                value={endTime}
+                onChange={(e) => setEndTime(Number(e.target.value))}
+                min={17}
+                max={23}
+                className="w-16 px-2 py-2 border border-slate-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* 근무 시간 요약 */}
+          <div className="bg-slate-50 rounded-lg p-3">
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-600">총 근무시간</span>
+              <span className={cn(
+                "font-medium",
+                workHours > 8 ? "text-blue-600" : workHours < 8 ? "text-amber-600" : "text-slate-800"
+              )}>
+                {formatHours(workHours)}
+              </span>
+            </div>
+          </div>
+
+          {/* 버튼 */}
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2 text-sm text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors"
+            >
+              저장
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

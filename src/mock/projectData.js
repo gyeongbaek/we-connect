@@ -31,12 +31,12 @@ export const mockProjectsData = [
     discordLink: "https://discord.gg/weconnect",
     notionLink: "https://notion.so/weconnect",
     participants: [
-      "ODzZq93x0R",
+      "5Y06gkQezX",
       "xBEYJgqZ8g",
       "rM0APGlw8l",
       "rjzQAaqRz7",
       "YG0dV1BGEw",
-    ], // Binky, Hati, Zeezee, Ona, SoulGom
+    ], // Benny, Hati, Zeezee, Ona, SoulGom
     checklists: [
       { id: "c1", title: "기획안 확정", done: true },
       { id: "c2", title: "ERD 설계", done: true },
@@ -45,8 +45,20 @@ export const mockProjectsData = [
       { id: "c5", title: "프론트엔드 개발", done: false },
     ],
     memos: [
-      { id: "m1", title: "킥오프 미팅", author: "Hati", date: "12/01", content: "프로젝트 방향성 논의" },
-      { id: "m2", title: "기술 스택 논의", author: "Binky", date: "12/03", content: "React + Vite 선정" },
+      {
+        id: "m1",
+        title: "킥오프 미팅",
+        author: "Hati",
+        date: "12/01",
+        content: "프로젝트 방향성 논의",
+      },
+      {
+        id: "m2",
+        title: "기술 스택 논의",
+        author: "Binky",
+        date: "12/03",
+        content: "React + Vite 선정",
+      },
     ],
     createdAt: "2024-11-01T09:00:00Z",
     updatedAt: "2024-12-06T15:30:00Z",
@@ -68,7 +80,13 @@ export const mockProjectsData = [
       { id: "c4", title: "홍보", done: false },
     ],
     memos: [
-      { id: "m1", title: "일정 조율", author: "Licat", date: "12/05", content: "1월 중순 시작 예정" },
+      {
+        id: "m1",
+        title: "일정 조율",
+        author: "Licat",
+        date: "12/05",
+        content: "1월 중순 시작 예정",
+      },
     ],
     createdAt: "2024-11-15T10:00:00Z",
     updatedAt: "2024-12-05T11:00:00Z",
@@ -110,7 +128,13 @@ export const mockProjectsData = [
       { id: "c4", title: "녹화", done: false },
     ],
     memos: [
-      { id: "m1", title: "강의 컨셉", author: "Licat", date: "11/25", content: "입문자 친화적으로" },
+      {
+        id: "m1",
+        title: "강의 컨셉",
+        author: "Licat",
+        date: "11/25",
+        content: "입문자 친화적으로",
+      },
     ],
     createdAt: "2024-11-20T09:00:00Z",
     updatedAt: "2024-12-06T14:00:00Z",
@@ -152,7 +176,13 @@ export const mockProjectsData = [
       { id: "c4", title: "수료식", done: true },
     ],
     memos: [
-      { id: "m1", title: "수료 회고", author: "Licat", date: "12/01", content: "성공적으로 마무리" },
+      {
+        id: "m1",
+        title: "수료 회고",
+        author: "Licat",
+        date: "12/01",
+        content: "성공적으로 마무리",
+      },
     ],
     createdAt: "2024-10-01T09:00:00Z",
     updatedAt: "2024-12-01T18:00:00Z",
@@ -192,7 +222,13 @@ export const mockProjectsData = [
       { id: "c3", title: "마이그레이션", done: false },
     ],
     memos: [
-      { id: "m1", title: "보류 사유", author: "Max", date: "10/15", content: "다른 프로젝트 우선순위" },
+      {
+        id: "m1",
+        title: "보류 사유",
+        author: "Max",
+        date: "10/15",
+        content: "다른 프로젝트 우선순위",
+      },
     ],
     createdAt: "2024-08-01T09:00:00Z",
     updatedAt: "2024-10-15T14:00:00Z",
