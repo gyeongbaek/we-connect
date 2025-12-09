@@ -134,24 +134,27 @@ function SidebarFooter({ collapsed, currentUser, onProfileClick, onLogout }) {
   return (
     <div className="p-3 border-t border-gray-100">
       <div
-        className={`flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors ${
+        className={`flex items-center gap-2 px-2  pl-1 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors ${
           collapsed ? "justify-center" : ""
         }`}
         onClick={onProfileClick}
         title={collapsed ? currentUser?.displayName : undefined}
       >
         <img
-          src={currentUser?.profileImage || `/images/profiles/${currentUser?.displayName?.toLowerCase()}.png`}
+          src={
+            currentUser?.profileImage ||
+            `/images/profiles/${currentUser?.displayName?.toLowerCase()}.png`
+          }
           alt={currentUser?.displayName}
           className="w-8 h-8 rounded-full object-cover shrink-0"
         />
         {!collapsed && (
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-gray-900 truncate">
-              {currentUser?.displayName}
-            </p>
-            <p className="text-xs text-gray-500 truncate">
-              {currentUser?.role || currentUser?.rank}
+          <div className="flex-1 min-w-0 ">
+            <p className="text-sm font-medium text-gray-900 truncate flex items-center">
+              {currentUser?.name}
+              <span className="text-xs text-gray-500 ml-1">
+                {currentUser?.displayName}
+              </span>
             </p>
           </div>
         )}

@@ -133,8 +133,8 @@ export const mockReservations = [
 
 // 운영 시간 설정
 export const OPERATION_HOURS = {
-  start: 9, // 09:00
-  end: 21, // 21:00
+  start: 6, // 06:00
+  end: 22, // 22:00
 };
 
 // 예약 규칙

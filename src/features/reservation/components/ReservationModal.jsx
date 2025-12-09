@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import {
@@ -22,10 +22,17 @@ export function ReservationModal({
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [title, setTitle] = useState("");
-  const [memo, setMemo] = useState("");
   const [error, setError] = useState(null);
+  const modalRef = useRef(null);
 
   const timeSlots = generateTimeSlots();
+
+  // 외부 클릭 시 모달 닫기
+  const handleBackdropClick = (e) => {
+    if (modalRef.current && !modalRef.current.contains(e.target)) {
+      onClose();
+    }
+  };
 
   useEffect(() => {
     if (initialData) {
@@ -34,7 +41,6 @@ export function ReservationModal({
       setStartTime(initialData.startTime || "");
       setEndTime(initialData.endTime || "");
       setTitle("");
-      setMemo("");
       setError(null);
     }
   }, [initialData, isOpen]);
@@ -98,7 +104,6 @@ export function ReservationModal({
       startTime,
       endTime,
       title: title.trim(),
-      memo: memo.trim() || null,
     });
     onClose();
   };
@@ -108,8 +113,11 @@ export function ReservationModal({
   const selectedRoom = ROOMS.find((r) => r.id === roomId);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl w-full max-w-md shadow-xl">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={handleBackdropClick}
+    >
+      <div ref={modalRef} className="bg-white rounded-xl w-full max-w-md shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-200">
           <h3 className="text-lg font-semibold text-slate-800">예약 등록</h3>
@@ -205,17 +213,6 @@ export function ReservationModal({
             />
           </div>
 
-          {/* Memo */}
-          <div>
-            <label className="text-xs text-slate-500 mb-1 block">메모 (선택)</label>
-            <textarea
-              value={memo}
-              onChange={(e) => setMemo(e.target.value)}
-              placeholder="추가 메모를 입력하세요"
-              className="w-full p-2 border border-slate-200 rounded-lg text-sm resize-none h-20"
-            />
-          </div>
-
           {/* Error */}
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
@@ -225,10 +222,18 @@ export function ReservationModal({
 
           {/* Actions */}
           <div className="flex gap-2 pt-2">
-            <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 border-slate-200 text-slate-600 hover:bg-slate-50"
+              onClick={onClose}
+            >
               취소
             </Button>
-            <Button type="submit" className="flex-1">
+            <Button
+              type="submit"
+              className="flex-1 bg-blue-500 hover:bg-blue-600 text-white"
+            >
               예약하기
             </Button>
           </div>

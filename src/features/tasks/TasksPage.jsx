@@ -114,28 +114,23 @@ export function TasksPage() {
       </div>
 
       {/* Date Navigation */}
-      <div className="flex items-center justify-between bg-[var(--background)] rounded-lg border border-[var(--grayLv2)] p-3">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={handlePrevDay}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-16 text-semibold">
-            {year}년 {month}월 {day}일 {dayName}요일
-          </span>
-          <Button variant="ghost" size="icon" onClick={handleNextDay}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-        <Button variant="ghost" size="sm" className="flex items-center gap-1">
-          <span className="text-14">
-            {year}. {String(month).padStart(2, "0")}. {String(day).padStart(2, "0")}.
-          </span>
-          <Calendar className="h-4 w-4" />
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="icon" onClick={handlePrevDay}>
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <span className="text-16 text-semibold">
+          {year}년 {month}월 {day}일 {dayName}요일
+        </span>
+        <Button variant="ghost" size="icon" onClick={handleNextDay}>
+          <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" style={{ minHeight: "600px" }}>
+      <div
+        className="grid grid-cols-1 lg:grid-cols-2 gap-4"
+        style={{ minHeight: "600px" }}
+      >
         {/* Left - Checklist */}
         <Checklist
           projectGroups={projectGroups}

@@ -80,18 +80,6 @@ export function ProfilePage() {
               )}
             </div>
           </div>
-
-          {/* Logout Button */}
-          <div className="flex-shrink-0">
-            <Button
-              variant="outline"
-              className="flex items-center gap-2"
-              onClick={handleLogout}
-            >
-              <LogOut className="h-4 w-4" />
-              로그아웃
-            </Button>
-          </div>
         </div>
       </div>
 
