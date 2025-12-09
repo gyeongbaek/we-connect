@@ -4,6 +4,7 @@ import {
   FileText,
   FolderKanban,
   Users,
+  CalendarDays,
   User,
   LogOut,
   X,
@@ -17,6 +18,7 @@ const navItems = [
   { to: "/tasks", icon: FileText, label: "업무 일지" },
   { to: "/projects", icon: FolderKanban, label: "프로젝트" },
   { to: "/team", icon: Users, label: "팀 현황" },
+  { to: "/reservation", icon: CalendarDays, label: "예약" },
 ];
 
 export function Sidebar({ isOpen, onClose }) {

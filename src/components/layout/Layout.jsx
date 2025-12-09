@@ -4,6 +4,7 @@ import {
   FileText,
   FolderKanban,
   Users,
+  CalendarDays,
   LogOut,
   Menu,
   ChevronLeft,
@@ -18,6 +19,7 @@ const pageTitles = {
   "/tasks": "업무 일지",
   "/projects": "프로젝트",
   "/team": "팀 현황",
+  "/reservation": "예약",
   "/profile": "내 프로필",
 };
 
@@ -112,6 +114,13 @@ function SidebarNav({ collapsed, isMobile, onToggle, onNavClick }) {
           icon={Users}
           label="팀 현황"
           to="/team"
+          collapsed={collapsed}
+          onClick={isMobile ? onNavClick : undefined}
+        />
+        <NavItem
+          icon={CalendarDays}
+          label="예약"
+          to="/reservation"
           collapsed={collapsed}
           onClick={isMobile ? onNavClick : undefined}
         />

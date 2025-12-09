@@ -1,5 +1,12 @@
 import { useAppStore } from "../../stores";
-import { Mail, Building2, Briefcase, Award, Calendar, LogOut } from "lucide-react";
+import {
+  Mail,
+  Building2,
+  Briefcase,
+  Award,
+  Calendar,
+  LogOut,
+} from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -22,7 +29,9 @@ export function ProfilePage() {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+    return `${date.getFullYear()}년 ${
+      date.getMonth() + 1
+    }월 ${date.getDate()}일`;
   };
 
   return (
@@ -40,14 +49,14 @@ export function ProfilePage() {
               <img
                 src={user.profileImage}
                 alt={user.displayName}
-                className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                className="w-20 h-20 rounded-full object-cover  "
               />
             ) : (
               <div
-                className="w-24 h-24 rounded-full flex items-center justify-center text-white text-3xl font-bold border-4 border-white shadow-lg"
+                className="w-20 h-20 rounded-full flex items-center justify-center text-white text-3xl font-bold border-4 border-white shadow-lg"
                 style={{ backgroundColor: `var(--${user.color || "primary"})` }}
               >
-                {user.displayName?.charAt(0) || user.name?.charAt(0)}
+                {user.name?.charAt(0) || user.displayName?.charAt(0)}
               </div>
             )}
           </div>
@@ -55,8 +64,10 @@ export function ProfilePage() {
           {/* Profile Info */}
           <div className="flex-1 text-center sm:text-left">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-              <h2 className="text-24 text-bold">{user.displayName}</h2>
-              <span className="text-14 text-[var(--grayLv3)]">({user.name})</span>
+              <h2 className="text-24 text-bold">{user.name}</h2>
+              <span className="text-18 text-[var(--grayLv3)]">
+                {user.displayName}
+              </span>
             </div>
             <div className="flex flex-wrap justify-center sm:justify-start gap-2 mb-4">
               <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-12">
