@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback } from "react";
+import { formatDateString, getTodayString } from "../utils/date";
 
 const AttendanceContext = createContext(null);
 
@@ -14,7 +15,7 @@ export const getDateRange = (startDate, endDate) => {
     const day = current.getDay();
     // 주말(0=일요일, 6=토요일) 제외
     if (day !== 0 && day !== 6) {
-      dates.push(current.toISOString().split("T")[0]);
+      dates.push(formatDateString(current));
     }
     current.setDate(current.getDate() + 1);
   }
@@ -125,7 +126,7 @@ const generateDefaultDecemberAttendance = () => {
     // 주말 제외 (0=일, 6=토)
     if (dayOfWeek === 0 || dayOfWeek === 6) continue;
 
-    const dateStr = date.toISOString().split("T")[0];
+    const dateStr = formatDateString(date);
     records[dateStr] = {
       morningLocation: "재택",
       afternoonLocation: "재택",
@@ -143,7 +144,7 @@ const generateDefaultDecemberAttendance = () => {
 };
 
 export function AttendanceProvider({ children }) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayString();
 
   const [morningLocation, setMorningLocation] = useState("재택");
   const [afternoonLocation, setAfternoonLocation] = useState("재택");

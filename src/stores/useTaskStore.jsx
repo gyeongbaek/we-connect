@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback } from "react";
+import { getTodayString } from "../utils/date";
 import {
   mockProjects,
   mockChecklistItems,
@@ -19,7 +20,7 @@ export function TaskProvider({ children }) {
     const newItem = {
       id: `c${Date.now()}`,
       userId: "user1",
-      date: new Date().toISOString().split("T")[0],
+      date: getTodayString(),
       content,
       projectId,
       status: "pending",
@@ -54,7 +55,7 @@ export function TaskProvider({ children }) {
     const newBlock = {
       id: `t${Date.now()}`,
       userId: "user1",
-      date: new Date().toISOString().split("T")[0],
+      date: getTodayString(),
       ...blockData,
       isCompleted: false,
     };

@@ -12,6 +12,7 @@ import {
   useVacationStore,
 } from "../../../stores";
 import { VACATION_TYPES } from "../../../mock/attendanceData";
+import { getTodayString } from "../../../utils/date";
 
 const locationOptions = ["휴가", "재택", "사무실", "오피스제주"];
 
@@ -66,7 +67,7 @@ export const CheckInWidget = () => {
     registerAttendance,
   } = useAttendanceStore();
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayString();
   const todayAttendance = registeredAttendance[today];
 
   // 등록된 휴가가 있으면 자동으로 설정

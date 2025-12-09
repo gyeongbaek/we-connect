@@ -5,6 +5,7 @@ import { mockQuickNotes, QUICKNOTE_EMOJIS } from "../../mock/teamData";
 import { useAppStore } from "../../stores";
 import { cn } from "../../utils/cn";
 import { getUserByDisplayName } from "../../mock/userData";
+import { getTodayString } from "../../utils/date";
 
 export function ActivitiesPage() {
   const navigate = useNavigate();
@@ -455,11 +456,6 @@ function TimelineItem({ activity, currentUserId, onJoin, onAddComment, onToggleC
   );
 }
 
-const getTodayDate = () => {
-  const today = new Date();
-  return today.toISOString().split("T")[0];
-};
-
 const getCurrentTime = () => {
   const now = new Date();
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
@@ -468,7 +464,7 @@ const getCurrentTime = () => {
 function AddActivityModal({ onClose, onSubmit }) {
   const [content, setContent] = useState("");
   const [selectedEmoji, setSelectedEmoji] = useState(QUICKNOTE_EMOJIS[0].emoji);
-  const [date, setDate] = useState(getTodayDate());
+  const [date, setDate] = useState(getTodayString());
   const [time, setTime] = useState(getCurrentTime());
   const [location, setLocation] = useState("");
 

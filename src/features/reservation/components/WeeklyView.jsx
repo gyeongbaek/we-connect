@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ROOMS, OPERATION_HOURS, timeToMinutes, minutesToTime } from "../../../mock/reservationData";
 import { getUserByDisplayName } from "../../../mock/userData";
+import { formatDateString, getTodayString } from "../../../utils/date";
 
 const TIME_SLOTS = [];
 for (let hour = OPERATION_HOURS.start; hour <= OPERATION_HOURS.end; hour += 2) {
@@ -20,7 +21,7 @@ const getWeekDates = (baseDate) => {
   for (let i = 0; i < 7; i++) {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
-    dates.push(d.toISOString().split("T")[0]);
+    dates.push(formatDateString(d));
   }
   return dates;
 };
@@ -140,7 +141,7 @@ export function WeeklyView({
     return () => window.removeEventListener("mouseup", handleGlobalMouseUp);
   }, [isDragging, dragStart, dragEnd, dragRoom, dragDate]);
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayString();
 
   return (
     <div className="bg-white rounded-lg border border-slate-200 overflow-hidden select-none">

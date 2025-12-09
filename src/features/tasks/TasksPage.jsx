@@ -10,6 +10,7 @@ import {
   useAttendanceStore,
   useTaskStore,
 } from "../../stores";
+import { formatDateString } from "../../utils/date";
 
 export function TasksPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -36,7 +37,7 @@ export function TasksPage() {
     useAttendanceStore();
 
   // 현재 날짜의 휴가 정보 확인
-  const dateStr = currentDate.toISOString().split("T")[0];
+  const dateStr = formatDateString(currentDate);
   const todayVacation = getVacationForDate(dateStr);
 
   // 휴가 정보를 타임테이블 형식으로 변환

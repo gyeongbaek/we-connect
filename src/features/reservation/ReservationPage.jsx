@@ -8,6 +8,7 @@ import { ReservationModal } from "./components/ReservationModal";
 import { ReservationDetailModal } from "./components/ReservationDetailModal";
 import { mockReservations } from "../../mock/reservationData";
 import { useAppStore } from "../../stores";
+import { formatDateString, getTodayString } from "../../utils/date";
 
 const VIEW_TYPES = [
   { id: "day", label: "일" },
@@ -18,9 +19,7 @@ const VIEW_TYPES = [
 export function ReservationPage() {
   const { currentUser } = useAppStore();
   const [viewType, setViewType] = useState("day");
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [selectedDate, setSelectedDate] = useState(getTodayString());
   const [reservations, setReservations] = useState(mockReservations);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -42,7 +41,7 @@ export function ReservationPage() {
     } else {
       date.setMonth(date.getMonth() - 1);
     }
-    setSelectedDate(date.toISOString().split("T")[0]);
+    setSelectedDate(formatDateString(date));
   };
 
   const handleNext = () => {
@@ -54,11 +53,11 @@ export function ReservationPage() {
     } else {
       date.setMonth(date.getMonth() + 1);
     }
-    setSelectedDate(date.toISOString().split("T")[0]);
+    setSelectedDate(formatDateString(date));
   };
 
   const handleToday = () => {
-    setSelectedDate(new Date().toISOString().split("T")[0]);
+    setSelectedDate(getTodayString());
   };
 
   // 날짜 포맷 함수

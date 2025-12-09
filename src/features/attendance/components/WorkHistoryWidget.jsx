@@ -6,6 +6,7 @@ import { TimeRangeBar, TimeScaleHeader } from "./TimeRangeBar";
 import { useAttendanceStore, useVacationStore } from "../../../stores";
 import { formatHours, formatTime } from "./TimeRangeSlider";
 import { cn } from "../../../utils/cn";
+import { formatDateString, getTodayString } from "../../../utils/date";
 
 // 해당 날짜가 속한 주의 월요일 구하기
 const getMonday = (date) => {
@@ -39,7 +40,7 @@ const getWeekDays = (monday) => {
     const date = new Date(monday);
     date.setDate(monday.getDate() + i);
     days.push({
-      date: date.toISOString().split("T")[0],
+      date: formatDateString(date),
       dayNum: date.getDate(),
       dayName: dayNames[i],
       month: date.getMonth(),
@@ -255,7 +256,7 @@ export const WorkHistoryWidget = () => {
 const WorkHistoryItem = ({ day, attendance, vacation, onEdit }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showEditButton, setShowEditButton] = useState(false);
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayString();
   const isToday = day.date === today;
 
   // 휴가 스토어에서 등록된 휴가 확인 (근무 기록이 없는 경우에도 표시)

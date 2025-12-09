@@ -1,3 +1,5 @@
+import { getTodayString } from "../utils/date";
+
 // 공간 목록
 export const ROOMS = [
   {
@@ -24,7 +26,7 @@ export const ROOMS = [
 ];
 
 // 오늘 날짜 기준 예약 목록
-const today = new Date().toISOString().split("T")[0];
+const today = getTodayString();
 
 export const mockReservations = [
   {

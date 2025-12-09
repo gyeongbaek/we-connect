@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { TimeRangeBar, TimeScaleHeader } from "./components/TimeRangeBar";
 import { useAttendanceStore, useVacationStore } from "../../stores";
 import { formatHours, formatTime } from "./components/TimeRangeSlider";
+import { formatDateString, getTodayString } from "../../utils/date";
 
 // 해당 날짜가 속한 주의 월요일 구하기
 const getMonday = (date) => {
@@ -29,7 +30,7 @@ const getWeeksInMonth = (year, month) => {
       const date = new Date(currentMonday);
       date.setDate(currentMonday.getDate() + i);
       weekDays.push({
-        date: date.toISOString().split("T")[0],
+        date: formatDateString(date),
         dayNum: date.getDate(),
         dayName: dayNames[i],
         month: date.getMonth(),
@@ -232,7 +233,7 @@ export function MonthlyAttendancePage() {
 // 근무 내역 아이템 컴포넌트
 const WorkHistoryItem = ({ day, attendance, vacation }) => {
   const [showTooltip, setShowTooltip] = useState(false);
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayString();
   const isToday = day.date === today;
 
   const vacationMorning = vacation?.timeType === "MORNING" || vacation?.timeType === "FULL";

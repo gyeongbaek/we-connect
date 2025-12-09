@@ -7,6 +7,7 @@ import {
   mockAttendanceRecords,
   mockVacationBalance,
 } from "../../mock/attendanceData";
+import { formatDateString, getTodayString } from "../../utils/date";
 
 export function AttendancePage() {
   const [records, setRecords] = useState(mockAttendanceRecords);
@@ -24,7 +25,7 @@ export function AttendancePage() {
         // 주말 제외
         if (d.getDay() === 0 || d.getDay() === 6) continue;
 
-        const dateStr = d.toISOString().split("T")[0];
+        const dateStr = formatDateString(d);
         newRecords.push({
           id: `${Date.now()}-${dateStr}`,
           userId: "user1",
@@ -56,7 +57,7 @@ export function AttendancePage() {
       alert(`${newRecords.length}일의 출근이 등록되었습니다!`);
     } else {
       // 단일 날짜 등록
-      const today = new Date().toISOString().split("T")[0];
+      const today = getTodayString();
       const newRecord = {
         id: Date.now().toString(),
         userId: "user1",

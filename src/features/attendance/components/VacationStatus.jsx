@@ -3,6 +3,7 @@ import { X, Trash2, Clock } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { VACATION_TYPES } from "../../../mock/attendanceData";
 import { useVacationStore } from "../../../stores";
+import { getTodayString } from "../../../utils/date";
 
 export function VacationStatus({ balances }) {
   const [selectedType, setSelectedType] = useState(null);
@@ -18,7 +19,7 @@ export function VacationStatus({ balances }) {
   } = useVacationStore();
 
   const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
+  const todayStr = getTodayString();
   const currentMonth = today.getMonth();
   const currentYear = today.getFullYear();
 
@@ -316,12 +317,8 @@ function VacationRequestModal({
 }) {
   const [type, setType] = useState(selectedType || "PAID");
   const [timeType, setTimeType] = useState("FULL");
-  const [startDate, setStartDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [endDate, setEndDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [startDate, setStartDate] = useState(getTodayString());
+  const [endDate, setEndDate] = useState(getTodayString());
 
   const balance = balances.find((b) => b.type === type);
   const hoursInfo = balance ? getVacationHoursInfo(balance) : null;

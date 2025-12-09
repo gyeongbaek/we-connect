@@ -1,4 +1,5 @@
 import { users, getUserById } from "./userData";
+import { getTodayString } from "../utils/date";
 
 // 팀원 상태 타입
 export const MEMBER_STATUS = {
@@ -228,7 +229,7 @@ export const mockTodayMeetings = [
     time: "10:00",
     participantCount: 5,
     participants: ["Licat", "Binky", "Wade", "HATI", "Zeezee"],
-    date: new Date().toISOString().split("T")[0],
+    date: getTodayString(),
   },
   {
     id: "m2",
@@ -237,7 +238,7 @@ export const mockTodayMeetings = [
     time: "14:00",
     participantCount: 3,
     participants: ["Licat", "Binky", "Ona"],
-    date: new Date().toISOString().split("T")[0],
+    date: getTodayString(),
   },
   {
     id: "m3",
@@ -246,7 +247,7 @@ export const mockTodayMeetings = [
     time: "16:00",
     participantCount: 2,
     participants: ["Licat", "Ali"],
-    date: new Date().toISOString().split("T")[0],
+    date: getTodayString(),
   },
 ];
 

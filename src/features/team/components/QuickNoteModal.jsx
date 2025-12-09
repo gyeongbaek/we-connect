@@ -2,11 +2,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { QUICKNOTE_EMOJIS } from "../../../mock/teamData";
 import { cn } from "../../../utils/cn";
-
-const getTodayDate = () => {
-  const today = new Date();
-  return today.toISOString().split("T")[0];
-};
+import { getTodayString } from "../../../utils/date";
 
 const getCurrentTime = () => {
   const now = new Date();
@@ -16,7 +12,7 @@ const getCurrentTime = () => {
 export function QuickNoteModal({ isOpen, onClose, onSubmit }) {
   const [content, setContent] = useState("");
   const [selectedEmoji, setSelectedEmoji] = useState(QUICKNOTE_EMOJIS[0].emoji);
-  const [date, setDate] = useState(getTodayDate());
+  const [date, setDate] = useState(getTodayString());
   const [time, setTime] = useState(getCurrentTime());
   const [location, setLocation] = useState("");
 

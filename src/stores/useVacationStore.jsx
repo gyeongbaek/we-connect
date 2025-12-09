@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback } from "react";
+import { formatDateString } from "../utils/date";
 
 const VacationContext = createContext(null);
 
@@ -32,7 +33,7 @@ export function VacationProvider({ children }) {
       const day = current.getDay();
       // 주말 제외
       if (day !== 0 && day !== 6) {
-        const dateStr = current.toISOString().split("T")[0];
+        const dateStr = formatDateString(current);
         newVacations[dateStr] = {
           vacationType: type,
           timeType,

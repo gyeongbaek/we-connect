@@ -1,4 +1,5 @@
 import { ROOMS } from "../../../mock/reservationData";
+import { getTodayString } from "../../../utils/date";
 
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -42,8 +43,7 @@ export function MonthlyView({
   onSlotClick,
 }) {
   const calendar = getMonthCalendar(year, month);
-  const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
+  const todayStr = getTodayString();
 
   const getReservationsForDate = (day) => {
     if (!day) return [];

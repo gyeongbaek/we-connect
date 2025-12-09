@@ -9,6 +9,7 @@ import {
   timeToMinutes,
   RESERVATION_RULES,
 } from "../../../mock/reservationData";
+import { getTodayString } from "../../../utils/date";
 
 export function ReservationModal({
   isOpen,
@@ -37,7 +38,7 @@ export function ReservationModal({
   useEffect(() => {
     if (initialData) {
       setRoomId(initialData.roomId || "");
-      setDate(initialData.date || new Date().toISOString().split("T")[0]);
+      setDate(initialData.date || getTodayString());
       setStartTime(initialData.startTime || "");
       setEndTime(initialData.endTime || "");
       setTitle("");
