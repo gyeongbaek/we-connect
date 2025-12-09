@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppProvider, UIProvider, AttendanceProvider, VacationProvider, TaskProvider } from "./stores";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Layout } from "./components/layout";
@@ -22,7 +22,7 @@ function App() {
         <AttendanceProvider>
           <VacationProvider>
             <TaskProvider>
-              <HashRouter>
+              <BrowserRouter>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route
@@ -47,7 +47,7 @@ function App() {
                   <Route path="profile" element={<ProfilePage />} />
                 </Route>
               </Routes>
-              </HashRouter>
+              </BrowserRouter>
             </TaskProvider>
           </VacationProvider>
         </AttendanceProvider>
