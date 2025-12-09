@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { X, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Trash2, Clock } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { VACATION_TYPES } from "../../../mock/attendanceData";
 import { useVacationStore } from "../../../stores";
@@ -7,17 +7,70 @@ import { useVacationStore } from "../../../stores";
 export function VacationStatus({ balances }) {
   const [selectedType, setSelectedType] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [remainingTime, setRemainingTime] = useState(null);
 
   const {
     registerVacation,
     getVacationsForMonth,
+    getVacationForDate,
     removeVacation,
     getUsedVacationHours,
   } = useVacationStore();
 
   const today = new Date();
+  const todayStr = today.toISOString().split("T")[0];
   const currentMonth = today.getMonth();
   const currentYear = today.getFullYear();
+
+  // 오늘 등록된 휴가 정보
+  const todayVacation = getVacationForDate(todayStr);
+
+  // 남은 시간 계산 (오늘 휴가인 경우)
+  useEffect(() => {
+    if (!todayVacation) {
+      setRemainingTime(null);
+      return;
+    }
+
+    const calculateRemainingTime = () => {
+      const now = new Date();
+      let endHour, endMinute;
+
+      // 휴가 종료 시간 설정
+      if (todayVacation.timeType === "MORNING") {
+        endHour = 12;
+        endMinute = 0;
+      } else if (todayVacation.timeType === "AFTERNOON") {
+        endHour = 18;
+        endMinute = 0;
+      } else {
+        // FULL
+        endHour = 18;
+        endMinute = 0;
+      }
+
+      const endTime = new Date();
+      endTime.setHours(endHour, endMinute, 0, 0);
+
+      const diff = endTime - now;
+      if (diff <= 0) {
+        return null;
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      return { hours, minutes };
+    };
+
+    const updateTime = () => {
+      setRemainingTime(calculateRemainingTime());
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 60000); // 1분마다 업데이트
+
+    return () => clearInterval(interval);
+  }, [todayVacation]);
 
   // 이번 달 등록된 휴가 목록
   const monthVacations = getVacationsForMonth(currentYear, currentMonth);
@@ -86,6 +139,12 @@ export function VacationStatus({ balances }) {
     return `${date.getMonth() + 1}/${date.getDate()}`;
   };
 
+  // 이번 달 사용한 총 휴가 시간
+  const monthlyUsedHours = monthVacations.reduce(
+    (sum, v) => sum + (v.timeType === "FULL" ? 8 : 4),
+    0
+  );
+
   return (
     <div className="bg-[var(--background)] rounded-lg border border-[var(--grayLv2)] p-4">
       {/* Header */}
@@ -93,6 +152,46 @@ export function VacationStatus({ balances }) {
         <h3 className="text-16 text-semibold">휴가 현황</h3>
         <span className="text-xs text-slate-400">1일 = 8시간</span>
       </div>
+
+      {/* 오늘 휴가 정보 - 남은 시간 표시 */}
+      {todayVacation && (
+        <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">
+                {VACATION_TYPES[todayVacation.vacationType]?.emoji || "🌴"}
+              </span>
+              <div>
+                <p className="text-sm font-medium text-orange-700">
+                  {VACATION_TYPES[todayVacation.vacationType]?.label || "휴가"}
+                  <span className="ml-1 text-xs text-orange-500">
+                    ({todayVacation.timeType === "FULL"
+                      ? "종일"
+                      : todayVacation.timeType === "MORNING"
+                      ? "오전"
+                      : "오후"})
+                  </span>
+                </p>
+                {remainingTime && (
+                  <p className="text-xs text-orange-600 flex items-center gap-1 mt-0.5">
+                    <Clock size={10} />
+                    남은 시간: {remainingTime.hours}시간 {remainingTime.minutes}분
+                  </p>
+                )}
+                {!remainingTime && (
+                  <p className="text-xs text-orange-500 mt-0.5">휴가 종료</p>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => removeVacation(todayStr)}
+              className="p-1.5 hover:bg-orange-100 rounded text-orange-400 hover:text-red-500"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Vacation Cards Grid */}
       <div className="grid grid-cols-3 gap-2 mb-4">
@@ -128,21 +227,17 @@ export function VacationStatus({ balances }) {
         })}
       </div>
 
-      {/* 등록된 휴가 목록 */}
-      {monthVacations.length > 0 && (
-        <div className="border-t border-slate-100 pt-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-500 font-medium">
-              {currentMonth + 1}월 등록된 휴가
-            </span>
-            <span className="text-xs text-slate-400">
-              {monthVacations.reduce(
-                (sum, v) => sum + (v.timeType === "FULL" ? 8 : 4),
-                0
-              )}
-              시간
-            </span>
-          </div>
+      {/* 12월 사용 휴가 */}
+      <div className="border-t border-slate-100 pt-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs text-slate-700 font-semibold">
+            {currentMonth + 1}월 사용 휴가
+          </span>
+          <span className={`text-xs font-medium ${monthlyUsedHours > 0 ? "text-blue-600" : "text-slate-400"}`}>
+            {monthlyUsedHours > 0 ? `${monthlyUsedHours}시간 (${monthlyUsedHours / 8}일)` : "없음"}
+          </span>
+        </div>
+        {monthVacations.length > 0 ? (
           <div className="space-y-1.5 max-h-32 overflow-y-auto">
             {monthVacations.map((vacation) => {
               const typeInfo = VACATION_TYPES[vacation.vacationType];
@@ -173,8 +268,12 @@ export function VacationStatus({ balances }) {
               );
             })}
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-xs text-slate-400 text-center py-2">
+            등록된 휴가가 없습니다
+          </p>
+        )}
+      </div>
 
       {/* Vacation Request Modal */}
       {showModal && (

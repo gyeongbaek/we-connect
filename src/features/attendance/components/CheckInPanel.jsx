@@ -35,7 +35,7 @@ export const CheckInWidget = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [vacationRemovalAlert, setVacationRemovalAlert] = useState(null);
 
-  const { openModal: openVacationModal, getVacationForDate, removeVacation } = useVacationStore();
+  const { openModal: openVacationModal, getVacationForDate, removeVacation, registerVacation } = useVacationStore();
 
   const {
     morningLocation,
@@ -151,6 +151,41 @@ export const CheckInWidget = () => {
       setMorningVacationType(vacationType);
     } else {
       setAfternoonVacationType(vacationType);
+    }
+
+    // 휴가를 VacationStore에 등록
+    const timeType = period === "morning" ? "MORNING" : "AFTERNOON";
+
+    // 이미 등록된 휴가가 있는지 확인
+    const existingVacation = getVacationForDate(today);
+
+    if (existingVacation) {
+      // 기존 휴가가 있으면 새 시간대 추가
+      if (existingVacation.timeType === "MORNING" && period === "afternoon") {
+        // 오전 휴가 있고 오후 추가 → 종일로 변경
+        registerVacation({
+          startDate: today,
+          endDate: today,
+          type: vacationType,
+          timeType: "FULL",
+        });
+      } else if (existingVacation.timeType === "AFTERNOON" && period === "morning") {
+        // 오후 휴가 있고 오전 추가 → 종일로 변경
+        registerVacation({
+          startDate: today,
+          endDate: today,
+          type: vacationType,
+          timeType: "FULL",
+        });
+      }
+    } else {
+      // 새로운 휴가 등록
+      registerVacation({
+        startDate: today,
+        endDate: today,
+        type: vacationType,
+        timeType,
+      });
     }
   };
 
