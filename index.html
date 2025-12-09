@@ -8,6 +8,16 @@
     <title>we:connect</title>
   </head>
   <body>
+    <script>
+      // SPA 404 리다이렉트 처리
+      (function() {
+        const redirectPath = sessionStorage.getItem('redirectPath');
+        if (redirectPath) {
+          sessionStorage.removeItem('redirectPath');
+          history.replaceState(null, '', redirectPath);
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

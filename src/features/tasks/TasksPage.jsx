@@ -116,15 +116,29 @@ export function TasksPage() {
         </Button>
       </div>
 
-      {/* Main Content - 모바일: 포모도로 > 체크리스트 > 타임테이블 순서 */}
+      {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* 1. 포모도로 */}
-        <div className="order-1 lg:order-1">
+        {/* Left - Pomodoro & Timetable (데스크톱) / 모바일에서는 포모도로만 */}
+        <div className="flex flex-col order-1">
           <PomodoroTimer />
+          {/* 모바일에서는 숨기고 데스크톱에서만 표시 */}
+          <div className="hidden lg:block">
+            <Timetable
+              timeBlocks={timeBlocks}
+              stats={stats}
+              isPublic={isPublic}
+              onTogglePublic={() => setIsPublic(!isPublic)}
+              onAddBlock={addTimeBlock}
+              onUpdateBlock={updateTimeBlock}
+              onDeleteBlock={deleteTimeBlock}
+              vacationInfo={vacationInfo}
+              attendanceInfo={todayAttendance}
+            />
+          </div>
         </div>
 
-        {/* 2. 체크리스트 */}
-        <div className="order-2 lg:order-3 lg:row-span-2">
+        {/* Right - Checklist */}
+        <div className="order-2">
           <Checklist
             projectGroups={projectGroups}
             shortTermTasks={shortTermTasks}
@@ -135,8 +149,8 @@ export function TasksPage() {
           />
         </div>
 
-        {/* 3. 타임테이블 */}
-        <div className="order-3 lg:order-2">
+        {/* 모바일에서만 표시되는 타임테이블 */}
+        <div className="lg:hidden order-3">
           <Timetable
             timeBlocks={timeBlocks}
             stats={stats}

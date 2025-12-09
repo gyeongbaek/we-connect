@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>we:connect</title>
+    <script>
+      // SPA 라우팅을 위한 리다이렉트
+      // GitHub Pages는 SPA를 지원하지 않으므로 404.html에서 처리
+      const path = window.location.pathname + window.location.search + window.location.hash;
+      sessionStorage.setItem('redirectPath', path);
+      window.location.replace('/');
+    </script>
+  </head>
+  <body>
+  </body>
+</html>
