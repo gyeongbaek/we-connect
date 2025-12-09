@@ -94,6 +94,12 @@ export function VacationStatus({ balances }) {
     removeVacation(date);
   };
 
+  // 신청이 필요 없는 휴가 타입 (자동 적용)
+  const AUTO_APPLY_TYPES = ["PAID", "UNPAID", "FOUNDATION", "BIRTHDAY"];
+
+  // 신청 필요 여부 확인
+  const needsApplication = (type) => !AUTO_APPLY_TYPES.includes(type);
+
   // 휴가 시간 기반 잔여 계산 (8시간 = 1일)
   const getVacationHoursInfo = (balance) => {
     const usedHours = getUsedVacationHours(balance.type);
@@ -107,18 +113,6 @@ export function VacationStatus({ balances }) {
       usedDays: usedHours / 8,
       remainingDays: remainingHours / 8,
     };
-  };
-
-  const getStatusText = (balance) => {
-    const info = getVacationHoursInfo(balance);
-
-    if (info.remainingHours <= 0) {
-      return "소진";
-    }
-    if (info.usedHours === 0 && info.totalHours > 0) {
-      return `${info.totalHours}시간`;
-    }
-    return `${info.remainingHours}/${info.totalHours}시간`;
   };
 
   const formatTimeType = (timeType) => {
@@ -199,6 +193,7 @@ export function VacationStatus({ balances }) {
           const typeInfo = VACATION_TYPES[balance.type];
           const hoursInfo = getVacationHoursInfo(balance);
           const isAvailable = hoursInfo.remainingHours > 0;
+          const requiresApplication = needsApplication(balance.type);
 
           return (
             <button
@@ -211,16 +206,29 @@ export function VacationStatus({ balances }) {
                   : "border-[var(--grayLv1)] bg-[var(--grayLv1)] opacity-50 cursor-not-allowed"
               }`}
             >
-              <div className="text-16 mb-1">{typeInfo.emoji}</div>
+              <div className="flex items-start justify-between">
+                <div className="text-16 mb-1">{typeInfo.emoji}</div>
+                {requiresApplication && isAvailable && (
+                  <span className="text-[8px] bg-amber-100 text-amber-700 px-1 py-0.5 rounded font-medium">
+                    신청 필요
+                  </span>
+                )}
+              </div>
               <div className="text-12 text-semibold truncate">
                 {typeInfo.label}
               </div>
-              <div
-                className={`text-10 ${
-                  isAvailable ? "text-[var(--grayLv3)]" : "text-[var(--error)]"
-                }`}
-              >
-                {getStatusText(balance)}
+              <div className="text-right">
+                <span
+                  className={`text-10 ${
+                    !isAvailable
+                      ? "text-[var(--error)]"
+                      : "text-[var(--grayLv3)]"
+                  }`}
+                >
+                  {!isAvailable
+                    ? "소진"
+                    : `${hoursInfo.remainingHours}/${hoursInfo.totalHours}시간`}
+                </span>
               </div>
             </button>
           );
@@ -241,26 +249,36 @@ export function VacationStatus({ balances }) {
           <div className="space-y-1.5 max-h-32 overflow-y-auto">
             {monthVacations.map((vacation) => {
               const typeInfo = VACATION_TYPES[vacation.vacationType];
+              const isVacationToday = vacation.date === todayStr;
               return (
                 <div
                   key={vacation.date}
-                  className="flex items-center justify-between p-2 bg-slate-50 rounded-lg text-xs"
+                  className={`flex items-center justify-between p-2 rounded-lg text-xs ${
+                    isVacationToday
+                      ? "bg-orange-50 border border-orange-200"
+                      : "bg-slate-50"
+                  }`}
                 >
                   <div className="flex items-center gap-2">
                     <span>{typeInfo?.emoji}</span>
-                    <span className="font-medium text-slate-700">
+                    <span className={`font-medium ${isVacationToday ? "text-orange-700" : "text-slate-700"}`}>
                       {formatDate(vacation.date)}
+                      {isVacationToday && <span className="ml-1">(오늘)</span>}
                     </span>
-                    <span className="text-slate-400">
+                    <span className={isVacationToday ? "text-orange-500" : "text-slate-400"}>
                       {formatTimeType(vacation.timeType)}
                     </span>
-                    <span className="text-blue-500">
+                    <span className={isVacationToday ? "text-orange-600" : "text-blue-500"}>
                       {vacation.timeType === "FULL" ? "8시간" : "4시간"}
                     </span>
                   </div>
                   <button
                     onClick={() => handleRemoveVacation(vacation.date)}
-                    className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-red-500"
+                    className={`p-1 rounded ${
+                      isVacationToday
+                        ? "hover:bg-orange-100 text-orange-400 hover:text-red-500"
+                        : "hover:bg-slate-200 text-slate-400 hover:text-red-500"
+                    }`}
                   >
                     <Trash2 size={12} />
                   </button>

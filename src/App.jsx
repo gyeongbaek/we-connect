@@ -4,6 +4,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Layout } from "./components/layout";
 import { LoginPage } from "./features/auth/LoginPage";
 import { AttendancePage } from "./features/attendance/AttendancePage";
+import { MonthlyAttendancePage } from "./features/attendance/MonthlyAttendancePage";
 import { TasksPage } from "./features/tasks/TasksPage";
 import { ProjectsPage } from "./features/projects/ProjectsPage";
 import { ProjectAddPage } from "./features/projects/ProjectAddPage";
@@ -33,6 +34,7 @@ function App() {
                 >
                   <Route index element={<Navigate to="/attendance" replace />} />
                   <Route path="attendance" element={<AttendancePage />} />
+                  <Route path="attendance/month" element={<MonthlyAttendancePage />} />
                   <Route path="tasks" element={<TasksPage />} />
                   <Route path="projects" element={<ProjectsPage />} />
                   <Route path="projects/new" element={<ProjectAddPage />} />

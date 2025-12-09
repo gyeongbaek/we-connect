@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Card } from "./Card";
-import { TimeRangeBar, TimeScaleHeader } from "./TimeRangeBar";
-import { useAttendanceStore, useVacationStore } from "../../../stores";
-import { formatHours, formatTime } from "./TimeRangeSlider";
+import { TimeRangeBar, TimeScaleHeader } from "./components/TimeRangeBar";
+import { useAttendanceStore, useVacationStore } from "../../stores";
+import { formatHours, formatTime } from "./components/TimeRangeSlider";
 
 // 해당 날짜가 속한 주의 월요일 구하기
 const getMonday = (date) => {
@@ -14,137 +13,137 @@ const getMonday = (date) => {
   return new Date(d.setDate(diff));
 };
 
-// 해당 날짜가 몇 주차인지 계산
-const getWeekOfMonth = (date) => {
-  const d = new Date(date);
-  const firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
-  const firstMonday = getMonday(firstDay);
+// 해당 월의 모든 주 가져오기
+const getWeeksInMonth = (year, month) => {
+  const weeks = [];
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
 
-  if (firstMonday.getMonth() < d.getMonth()) {
-    firstMonday.setDate(firstMonday.getDate() + 7);
+  let currentMonday = getMonday(firstDay);
+
+  while (currentMonday <= lastDay) {
+    const weekDays = [];
+    const dayNames = ["월", "화", "수", "목", "금"];
+
+    for (let i = 0; i < 5; i++) {
+      const date = new Date(currentMonday);
+      date.setDate(currentMonday.getDate() + i);
+      weekDays.push({
+        date: date.toISOString().split("T")[0],
+        dayNum: date.getDate(),
+        dayName: dayNames[i],
+        month: date.getMonth(),
+        isCurrentMonth: date.getMonth() === month,
+      });
+    }
+
+    weeks.push(weekDays);
+    currentMonday.setDate(currentMonday.getDate() + 7);
   }
 
-  const monday = getMonday(d);
-  const diff = Math.floor((monday - firstMonday) / (7 * 24 * 60 * 60 * 1000));
-  return diff + 1;
+  return weeks;
 };
 
-// 해당 주의 월-금 날짜 배열 구하기
-const getWeekDays = (monday) => {
-  const days = [];
-  const dayNames = ["월", "화", "수", "목", "금"];
-
-  for (let i = 0; i < 5; i++) {
-    const date = new Date(monday);
-    date.setDate(monday.getDate() + i);
-    days.push({
-      date: date.toISOString().split("T")[0],
-      dayNum: date.getDate(),
-      dayName: dayNames[i],
-      month: date.getMonth(),
-    });
-  }
-
-  return days;
-};
-
-// 근무 내역 위젯
-export const WorkHistoryWidget = () => {
+export function MonthlyAttendancePage() {
   const navigate = useNavigate();
-  const [currentMonday, setCurrentMonday] = useState(getMonday(new Date()));
+  const [currentDate, setCurrentDate] = useState(new Date());
   const { registeredAttendance } = useAttendanceStore();
   const { getVacationForDate } = useVacationStore();
 
-  const weekDays = getWeekDays(currentMonday);
-  const month = currentMonday.getMonth();
-  const weekNum = getWeekOfMonth(currentMonday);
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const weeks = getWeeksInMonth(year, month);
 
-  // 등록된 근무 기록 가져오기
+  const handlePrevMonth = () => {
+    setCurrentDate(new Date(year, month - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentDate(new Date(year, month + 1, 1));
+  };
+
   const getAttendanceForDate = (dateStr) => {
     return registeredAttendance[dateStr] || null;
   };
 
-  // 오늘까지의 근무일 수 계산 (주말 제외)
-  const getWorkingDaysUntilToday = () => {
-    const today = new Date();
-    const year = currentMonday.getFullYear();
-    const startOfMonth = new Date(year, month, 1);
-    const endDate = today.getMonth() === month && today.getFullYear() === year
-      ? today
-      : new Date(year, month + 1, 0); // 해당 월의 마지막 날
-
-    let workingDays = 0;
-    for (let d = new Date(startOfMonth); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const dayOfWeek = d.getDay();
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 주말 제외
-        workingDays++;
-      }
-    }
-    return workingDays;
-  };
-
-  // 월별 통계 계산 (오늘 기준)
+  // 월별 통계 계산
   const calculateMonthlyStats = () => {
     let totalHours = 0;
+    let workDays = 0;
 
     Object.entries(registeredAttendance).forEach(([date, att]) => {
       const d = new Date(date);
-      if (d.getFullYear() === currentMonday.getFullYear() && d.getMonth() === month) {
+      if (d.getFullYear() === year && d.getMonth() === month) {
         const morningHours = att.morningLocation === "휴가" ? 0 : (att.lunchStart - att.startTime);
         const afternoonHours = att.afternoonLocation === "휴가" ? 0 : (att.endTime - att.lunchEnd);
         totalHours += morningHours + afternoonHours;
+        workDays++;
       }
     });
 
-    const workingDays = getWorkingDaysUntilToday();
-    const standardHours = workingDays * 8; // 오늘까지 예상 근무시간
+    // 오늘까지의 근무일 수 계산 (주말 제외)
+    const today = new Date();
+    const startOfMonth = new Date(year, month, 1);
+    const endDate = today.getMonth() === month && today.getFullYear() === year
+      ? today
+      : new Date(year, month + 1, 0);
+
+    let expectedWorkingDays = 0;
+    for (let d = new Date(startOfMonth); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const dayOfWeek = d.getDay();
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        expectedWorkingDays++;
+      }
+    }
+
+    const standardHours = expectedWorkingDays * 8;
     const overtimeHours = totalHours - standardHours;
 
     return {
       totalHours,
       standardHours,
       overtimeHours,
-      workingDays,
+      workDays,
+      expectedWorkingDays,
     };
   };
 
   const stats = calculateMonthlyStats();
 
-
-  const handlePrevWeek = () => {
-    const newMonday = new Date(currentMonday);
-    newMonday.setDate(currentMonday.getDate() - 7);
-    setCurrentMonday(newMonday);
-  };
-
-  const handleNextWeek = () => {
-    const newMonday = new Date(currentMonday);
-    newMonday.setDate(currentMonday.getDate() + 7);
-    setCurrentMonday(newMonday);
-  };
-
   return (
-    <>
-      <Card className="flex flex-col">
-        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => navigate("/attendance")}
+          className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
+        >
+          <ChevronLeft size={16} />
+          돌아가기
+        </button>
+      </div>
+
+      {/* Month Navigation */}
+      <div className="bg-white rounded-lg border border-slate-200 p-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
             <button
-              onClick={handlePrevWeek}
-              className="p-1 hover:bg-slate-100 rounded"
+              onClick={handlePrevMonth}
+              className="p-2 hover:bg-slate-100 rounded-lg"
             >
-              <ChevronLeft size={16} className="text-slate-500" />
+              <ChevronLeft size={20} className="text-slate-600" />
             </button>
-            <h3 className="font-medium text-slate-800 text-sm">
-              {month + 1}월 {weekNum}주차
-            </h3>
+            <h2 className="text-lg font-semibold text-slate-800">
+              {year}년 {month + 1}월 근무 내역
+            </h2>
             <button
-              onClick={handleNextWeek}
-              className="p-1 hover:bg-slate-100 rounded"
+              onClick={handleNextMonth}
+              className="p-2 hover:bg-slate-100 rounded-lg"
             >
-              <ChevronRight size={16} className="text-slate-500" />
+              <ChevronRight size={20} className="text-slate-600" />
             </button>
           </div>
-          <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-4 text-xs">
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-blue-500" />
               근무
@@ -160,33 +159,20 @@ export const WorkHistoryWidget = () => {
           </div>
         </div>
 
-        {/* Time Scale Header */}
-        <div className="px-4 pt-2 pb-1 flex items-center gap-3">
-          <div className="w-14 shrink-0" />
-          <div className="flex-1">
-            <TimeScaleHeader />
-          </div>
-          <div className="w-12 shrink-0" />
-        </div>
-
-        <div className="divide-y divide-slate-100">
-          {weekDays.map((day) => (
-            <WorkHistoryItem
-              key={day.date}
-              day={day}
-              attendance={getAttendanceForDate(day.date)}
-              vacation={getVacationForDate(day.date)}
-            />
-          ))}
-        </div>
-
-        <div className="px-4 py-3 bg-slate-50 border-t border-slate-100">
+        {/* Monthly Summary */}
+        <div className="bg-slate-50 rounded-lg p-4 mb-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
               <div>
-                <span className="text-xs text-slate-500">{month + 1}월 근무</span>
+                <span className="text-xs text-slate-500">총 근무시간</span>
                 <span className="text-sm font-medium text-slate-800 ml-2">
-                  {formatHours(stats.totalHours)} / {formatHours(stats.standardHours)}
+                  {formatHours(stats.totalHours)}
+                </span>
+              </div>
+              <div>
+                <span className="text-xs text-slate-500">예상 근무시간 (오늘 기준)</span>
+                <span className="text-sm font-medium text-slate-800 ml-2">
+                  {formatHours(stats.standardHours)}
                 </span>
               </div>
               {stats.overtimeHours !== 0 && (
@@ -205,18 +191,43 @@ export const WorkHistoryWidget = () => {
                 </div>
               )}
             </div>
-            <button
-              onClick={() => navigate("/attendance/month")}
-              className="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1"
-            >
-              전체 내역 <ChevronRight size={12} />
-            </button>
+            <div className="text-xs text-slate-500">
+              {stats.workDays}일 출근 / {stats.expectedWorkingDays}일 예정
+            </div>
           </div>
         </div>
-      </Card>
-    </>
+
+        {/* Time Scale Header */}
+        <div className="px-4 pt-2 pb-1 flex items-center gap-3">
+          <div className="w-14 shrink-0" />
+          <div className="flex-1">
+            <TimeScaleHeader />
+          </div>
+          <div className="w-12 shrink-0" />
+        </div>
+
+        {/* Weekly Records */}
+        <div className="divide-y divide-slate-100">
+          {weeks.map((weekDays, weekIndex) => (
+            <div key={weekIndex} className="py-2">
+              <div className="text-xs text-slate-400 px-4 mb-1">
+                {weekIndex + 1}주차
+              </div>
+              {weekDays.map((day) => (
+                <WorkHistoryItem
+                  key={day.date}
+                  day={day}
+                  attendance={getAttendanceForDate(day.date)}
+                  vacation={getVacationForDate(day.date)}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
-};
+}
 
 // 근무 내역 아이템 컴포넌트
 const WorkHistoryItem = ({ day, attendance, vacation }) => {
@@ -224,11 +235,9 @@ const WorkHistoryItem = ({ day, attendance, vacation }) => {
   const today = new Date().toISOString().split("T")[0];
   const isToday = day.date === today;
 
-  // 휴가 스토어에서 등록된 휴가 확인 (출근 기록이 없는 경우에도 표시)
   const vacationMorning = vacation?.timeType === "MORNING" || vacation?.timeType === "FULL";
   const vacationAfternoon = vacation?.timeType === "AFTERNOON" || vacation?.timeType === "FULL";
 
-  // attendance가 있으면 attendance 기준, 없으면 vacation 기준
   const isMorningVacation = attendance?.morningLocation === "휴가" || (!attendance && vacationMorning);
   const isAfternoonVacation = attendance?.afternoonLocation === "휴가" || (!attendance && vacationAfternoon);
   const isFullVacation = isMorningVacation && isAfternoonVacation;
@@ -256,6 +265,21 @@ const WorkHistoryItem = ({ day, attendance, vacation }) => {
       (isAfternoonVacation ? 0 : attendance.endTime - attendance.lunchEnd)
     : 0;
 
+  if (!day.isCurrentMonth) {
+    return (
+      <div className="px-4 py-2 flex items-center gap-3 opacity-30">
+        <div className="w-14 shrink-0">
+          <div className="text-sm font-medium text-slate-400">
+            {day.date.slice(5)}
+          </div>
+          <div className="text-xs text-slate-300">{day.dayName}</div>
+        </div>
+        <div className="flex-1 h-4 bg-slate-50 rounded" />
+        <div className="w-12 shrink-0" />
+      </div>
+    );
+  }
+
   return (
     <div
       className={`px-4 py-2 flex items-center gap-3 hover:bg-slate-50 transition-colors relative ${
@@ -264,14 +288,11 @@ const WorkHistoryItem = ({ day, attendance, vacation }) => {
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
     >
-      {/* Tooltip */}
       {showTooltip && attendance && (
         <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-slate-800 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-10">
           <div className="font-medium mb-1">{day.date} ({day.dayName})</div>
           <div>{getTooltipContent()}</div>
-          <div className="mt-1 text-slate-300">
-            근무 {formatHours(hours)}
-          </div>
+          <div className="mt-1 text-slate-300">근무 {formatHours(hours)}</div>
           <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-800" />
         </div>
       )}
@@ -343,4 +364,3 @@ const WorkHistoryItem = ({ day, attendance, vacation }) => {
     </div>
   );
 };
-
