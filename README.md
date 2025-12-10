@@ -3,7 +3,7 @@
 우리의 연결을 더 **강하게**
 
 <img width="1099" height="607" alt="스크린샷 2025-12-10 오전 9 55 08" src="https://github.com/user-attachments/assets/eebd452e-fa19-49b1-988c-22844ec9d931" />
-
+[발표문서](https://www.figma.com/deck/PGSxC8KINS3F2XmVx0vB9u)
 
 ## 1. 프로젝트 개요
 
